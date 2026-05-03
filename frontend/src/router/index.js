@@ -12,6 +12,8 @@ import AdminProducts from '../pages/AdminProducts.vue'
 import Login from '../pages/Login.vue'
 import Register from '../pages/Register.vue'
 import CompleteProfile from '../pages/CompleteProfile.vue'
+import UserProfile from '../pages/UserProfile.vue'
+import NotFound from '../pages/NotFound.vue'
 
 const routes = [
   {
@@ -76,6 +78,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/profile',
+    name: 'UserProfile',
+    component: UserProfile,
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/admin',
     name: 'AdminDashboard',
     component: AdminDashboard,
@@ -86,6 +94,11 @@ const routes = [
     name: 'AdminProducts',
     component: AdminProducts,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/:catchAll(.*)',
+    name: 'NotFound',
+    component: NotFound
   }
 ]
 

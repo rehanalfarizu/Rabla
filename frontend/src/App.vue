@@ -7,7 +7,7 @@ import Footer from './layouts/Footer.vue'
 const route = useRoute()
 const showNavbar = computed(() =>
   !route.path.startsWith('/admin') &&
-  !['Login', 'Register', 'CompleteProfile'].includes(route.name)
+  !['Login', 'Register', 'CompleteProfile', 'Checkout', 'OrderSummary', 'OrderTrack', 'NotFound'].includes(route.name)
 )
 </script>
 

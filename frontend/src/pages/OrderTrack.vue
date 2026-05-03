@@ -78,8 +78,44 @@ const downloadInvoice = () => {
 </script>
 
 <template>
-  <div class="p-6 min-h-screen pt-28 bg-white">
+  <div class="p-6 min-h-screen py-8 bg-white">
     <div class="max-w-6xl mx-auto">
+      <nav aria-label="Breadcrumb" class="mb-8">
+         <ul class="flex items-center gap-3">
+            <li>
+               <div class="flex items-center">
+                  <router-link to="/" class="text-slate-500 font-medium text-sm flex items-center gap-2 hover:text-blue-700">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="size-4 fill-current" viewBox="0 0 512 512">
+                        <path d="M426 495.983H86c-25.364 0-46-20.635-46-46v-242.02c0-8.836 7.163-16 16-16s16 7.164 16 16v242.02c0 7.72 6.28 14 14 14h340c7.72 0 14-6.28 14-14v-242.02c0-8.836 7.163-16 16-16s16 7.164 16 16v242.02c0 25.364-20.635 46-46 46" />
+                        <path d="M496 263.958a15.95 15.95 0 0 1-11.313-4.687L285.698 60.284c-16.375-16.376-43.02-16.376-59.396 0L27.314 259.272c-6.248 6.249-16.379 6.249-22.627 0-6.249-6.248-6.249-16.379 0-22.627L203.675 37.656c28.852-28.852 75.799-28.852 104.65 0l198.988 198.988c6.249 6.249 6.249 16.379 0 22.627A15.94 15.94 0 0 1 496 263.958M320 495.983H192c-8.837 0-16-7.164-16-16v-142c0-27.57 22.43-50 50-50h60c27.57 0 50 22.43 50 50v142c0 8.836-7.163 16-16 16m-112-32h96v-126c0-9.925-8.075-18-18-18h-60c-9.925 0-18 8.075-18 18z" />
+                     </svg>
+                     Home
+                  </router-link>
+               </div>
+            </li>
+            <li>
+               <div class="flex items-center gap-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="fill-slate-500 size-2.5" viewBox="0 0 451.846 451.847">
+                     <path d="M345.441 248.292 151.154 442.573c-12.359 12.365-32.397 12.365-44.75 0-12.354-12.354-12.354-32.391 0-44.744L278.318 225.92 106.409 54.017c-12.354-12.359-12.354-32.394 0-44.748 12.354-12.359 32.391-12.359 44.75 0l194.287 194.284c6.177 6.18 9.262 14.271 9.262 22.366 0 8.099-3.091 16.196-9.267 22.373" />
+                  </svg>
+                  <router-link to="/profile" class="text-slate-500 font-medium text-sm hover:text-blue-700">
+                     Profile
+                  </router-link>
+               </div>
+            </li>
+            <li aria-current="page">
+               <div class="flex items-center gap-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="fill-slate-500 size-2.5" viewBox="0 0 451.846 451.847">
+                     <path d="M345.441 248.292 151.154 442.573c-12.359 12.365-32.397 12.365-44.75 0-12.354-12.354-12.354-32.391 0-44.744L278.318 225.92 106.409 54.017c-12.354-12.359-12.354-32.394 0-44.748 12.354-12.359 32.391-12.359 44.75 0l194.287 194.284c6.177 6.18 9.262 14.271 9.262 22.366 0 8.099-3.091 16.196-9.267 22.373" />
+                  </svg>
+                  <span class="text-slate-900 text-sm font-medium">
+                     Track Order
+                  </span>
+               </div>
+            </li>
+         </ul>
+      </nav>
+
       <div class="flex items-center gap-6 flex-wrap border-b border-gray-300 pb-6">
         <div class="flex-1 text-nowrap">
           <h2 class="text-2xl font-semibold text-slate-900">Order Tracking</h2>

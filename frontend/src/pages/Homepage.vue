@@ -72,7 +72,7 @@ hover:bg-white/50 hover:border-white/40 hover:shadow-lg hover:scale-105">
     <!-- Featured Products -->
     <section class="py-2">
       <div class="container mx-auto px-4">
-        <h2 class="text-3xl font-bold mb-12">Featured Products</h2>
+        <h2 class="text-3xl font-bold mb-12">New Product</h2>
         
         <!-- Product Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
@@ -645,6 +645,26 @@ hover:bg-white/50 hover:border-white/40 hover:shadow-lg hover:scale-105">
       </div>
     </div>
     </section>
+
+    <section class="mt-24 px-4 md:px-8">
+   <div class="max-w-3xl mx-auto text-center">
+      <div>
+         <h2 class="text-3xl font-bold text-slate-900 mb-6 md:text-4xl">Try using our templates</h2>
+         <p class="text-base text-slate-600 leading-relaxed">Try using our templates to quickly
+            create professional pages without starting from scratch. Save time, stay consistent, and customize designs
+            to fit your brand perfectly.</p>
+      </div>
+
+      <div class="flex justify-center gap-4 flex-wrap mt-8">
+         <a href="#"
+            class="py-2.5 px-4 text-white text-sm font-semibold rounded-md bg-blue-600 inline-block border border-blue-600 transition-colors hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+            Get started</a>
+         <a href="#"
+            class="py-2.5 px-4 text-slate-900 text-sm font-semibold rounded-md bg-white inline-block border border-slate-300 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+            Learn more</a>
+      </div>
+   </div>
+</section>
 
     <section>
       <div class="max-w-screen-xl mx-auto p-4 py-24">
