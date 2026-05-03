@@ -6,6 +6,30 @@ import ToastAlert from '../components/ToastAlert.vue'
 const router = useRouter()
 const toastAlert = ref(null)
 const showLogoutModal = ref(false)
+const isEditingAddress = ref(false)
+
+const saveChanges = () => {
+  const authUser = JSON.parse(localStorage.getItem('auth_user') || '{}')
+  authUser.name = user.value.name
+  authUser.phone = user.value.phone
+  authUser.address = user.value.address
+  authUser.city = ''
+  authUser.province = ''
+  authUser.postalCode = ''
+  
+  localStorage.setItem('auth_user', JSON.stringify(authUser))
+  
+  const allProfiles = JSON.parse(localStorage.getItem('user_profiles') || '{}')
+  if (authUser.email) {
+    allProfiles[authUser.email] = authUser
+    localStorage.setItem('user_profiles', JSON.stringify(allProfiles))
+  }
+
+  isEditingAddress.value = false
+  if (toastAlert.value) {
+    toastAlert.value.show('success', 'Perubahan berhasil disimpan!')
+  }
+}
 
 const confirmLogout = () => {
   showLogoutModal.value = true
@@ -172,16 +196,21 @@ const navigateTo = (path) => {
 
                 <!-- Address (Full Width) -->
                 <div class="md:col-span-2">
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Primary Address</label>
-                  <textarea v-model="user.address" rows="3" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all resize-none"></textarea>
+                  <div class="flex justify-between items-center mb-2">
+                    <label class="block text-sm font-medium text-gray-700">Primary Address</label>
+                    <button type="button" v-if="!isEditingAddress" @click="isEditingAddress = true" class="text-sm font-medium text-blue-600 hover:text-blue-700">
+                      Edit Address
+                    </button>
+                  </div>
+                  <textarea v-model="user.address" :disabled="!isEditingAddress" rows="3" :class="[isEditingAddress ? 'bg-white' : 'bg-gray-50 text-gray-500']" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all resize-none"></textarea>
                 </div>
               </div>
 
               <div class="flex justify-end gap-4 mt-8 pt-6 border-t border-gray-100">
-                <button type="button" class="px-6 py-3 rounded-xl font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors">
+                <button type="button" @click="isEditingAddress = false" class="px-6 py-3 rounded-xl font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors">
                   Cancel
                 </button>
-                <button type="button" class="px-6 py-3 rounded-xl font-medium text-white bg-black hover:bg-gray-900 transition-colors">
+                <button type="button" @click="saveChanges" class="px-6 py-3 rounded-xl font-medium text-white bg-black hover:bg-gray-900 transition-colors">
                   Save Changes
                 </button>
               </div>

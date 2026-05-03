@@ -40,6 +40,7 @@ const handleSubmit = async (e) => {
     // Gabungkan data profil dengan data user yang sudah ada
     const updatedUser = {
       ...authUser,
+      name: fullName.value,
       phone: phone.value,
       address: address.value,
       city: city.value,
