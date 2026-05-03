@@ -9,6 +9,9 @@ import OrderSummary from '../pages/OrderSummary.vue'
 import OrderTrack from '../pages/OrderTrack.vue'
 import AdminDashboard from '../pages/AdminDashboard.vue'
 import AdminProducts from '../pages/AdminProducts.vue'
+import AdminCustomers from '../pages/AdminCustomers.vue'
+import AdminOrders from '../pages/AdminOrders.vue'
+import AdminPromotions from '../pages/AdminPromotions.vue'
 import Login from '../pages/Login.vue'
 import Register from '../pages/Register.vue'
 import CompleteProfile from '../pages/CompleteProfile.vue'
@@ -96,6 +99,24 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/admin/customers',
+    name: 'AdminCustomers',
+    component: AdminCustomers,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/orders',
+    name: 'AdminOrders',
+    component: AdminOrders,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/promotions',
+    name: 'AdminPromotions',
+    component: AdminPromotions,
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/:catchAll(.*)',
     name: 'NotFound',
     component: NotFound
@@ -111,7 +132,10 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const isLoggedIn = !!localStorage.getItem('auth_token')
 
-  if (to.meta.requiresAuth && !isLoggedIn) {
+  if (isLoggedIn && (to.name === 'Login' || to.name === 'Register')) {
+    // Cegah user yang sudah login untuk kembali ke halaman login atau register
+    next({ name: 'Home' })
+  } else if (to.meta.requiresAuth && !isLoggedIn) {
     // Simpan halaman yang ingin dituju agar bisa redirect setelah login
     next({ name: 'Login', query: { redirect: to.fullPath } })
   } else {

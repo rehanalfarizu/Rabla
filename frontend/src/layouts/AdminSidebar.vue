@@ -13,189 +13,187 @@ const props = defineProps({
 const emit = defineEmits(['toggle'])
 const route = useRoute()
 
+// Computed logic for active states tracking
 const isDashboardActive = computed(() => route.path === '/admin')
+const isOrdersActive = computed(() => route.path.startsWith('/admin/orders'))
 const isProductsActive = computed(() => route.path.startsWith('/admin/products'))
+
+const isCustomersActive = computed(() => route.path.startsWith('/admin/customers'))
+const isPromotionsActive = computed(() => route.path.startsWith('/admin/promotions'))
+
+const isInboxActive = computed(() => route.path.startsWith('/admin/inbox'))
+const isRefundsActive = computed(() => route.path.startsWith('/admin/refunds'))
+
 </script>
 
 <template>
   <nav
-    class="fixed left-0 top-0 z-40 h-screen overflow-y-auto overflow-x-hidden rounded-r bg-white px-2 py-3 text-orange-400 shadow-xl transition-all duration-300"
-    :style="{ width: sidebarOpen ? '240px' : '72px' }"
+    class="fixed left-0 top-0 z-40 h-screen overflow-y-auto overflow-x-hidden border-r border-gray-100 bg-white px-3 py-4 shadow-xl transition-all duration-300 flex flex-col"
+    :style="{ width: sidebarOpen ? '250px' : '80px' }"
   >
-    <div class="relative flex h-full flex-col">
-      <div class="relative flex items-center" :class="sidebarOpen ? 'w-full px-1' : 'justify-center'">
-        <a class="flex items-center justify-center" href="javascript:void(0)">
-          <img :src="logoImg" alt="Logo" class="h-8 w-8 object-contain" />
-          <span v-if="sidebarOpen" class="ml-2 text-sm font-bold text-gray-800">MarkHub</span>
-        </a>
+    <!-- Logo & Toggle -->
+    <div class="relative flex items-center mb-6" :class="sidebarOpen ? 'w-full px-2' : 'justify-center'">
+      <router-link to="/admin" class="flex items-center justify-center">
+        <img :src="logoImg" alt="Logo" class="h-8 w-8 object-contain" />
+        <span v-if="sidebarOpen" class="ml-3 text-lg font-bold text-gray-900 tracking-tight">DASHBOARD</span>
+      </router-link>
 
-        <button
-          type="button"
-          @click="emit('toggle')"
-          class="text-gray-400 transition-colors hover:text-orange-400"
-          :class="sidebarOpen 
-            ? 'absolute right-0' 
-            : 'mt-2 mx-auto block rotate-180'"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 fill-current transition-transform duration-300" viewBox="0 0 55.752 55.752">
-            <path
-              d="M43.006 23.916a5.36 5.36 0 0 0-.912-.727L20.485 1.581a5.4 5.4 0 0 0-7.637 7.638l18.611 18.609-18.705 18.707a5.398 5.398 0 1 0 7.634 7.635l21.706-21.703a5.35 5.35 0 0 0 .912-.727 5.373 5.373 0 0 0 1.574-3.912 5.363 5.363 0 0 0-1.574-3.912z"
-            />
-          </svg>
-        </button>
-      </div>
+      <button
+        type="button"
+        @click="emit('toggle')"
+        class="text-gray-400 transition-colors hover:text-gray-900"
+        :class="sidebarOpen 
+          ? 'absolute right-0' 
+          : 'fixed left-5 top-16 block rotate-180 bg-white shadow-sm border border-gray-100 rounded-full p-1 z-50'"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 fill-current transition-transform duration-300" viewBox="0 0 55.752 55.752">
+          <path d="M43.006 23.916a5.36 5.36 0 0 0-.912-.727L20.485 1.581a5.4 5.4 0 0 0-7.637 7.638l18.611 18.609-18.705 18.707a5.398 5.398 0 1 0 7.634 7.635l21.706-21.703a5.35 5.35 0 0 0 .912-.727 5.373 5.373 0 0 0 1.574-3.912 5.363 5.363 0 0 0-1.574-3.912z" />
+        </svg>
+      </button>
+    </div>
 
-      <div class="mt-3 border-t border-gray-300"></div>
-
-      <div class="w-full px-1">
-        <ul class="mt-2 flex-1" :class="!sidebarOpen ? 'flex flex-col items-center' : ''">
+    <!-- Navigation Groups -->
+    <div class="w-full flex-1 flex flex-col gap-6">
+      
+      <!-- MAIN SECTION -->
+      <div>
+        <h4 v-if="sidebarOpen" class="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Main</h4>
+        <ul class="space-y-1" :class="!sidebarOpen ? 'flex flex-col items-center' : ''">
           <li>
             <router-link
               to="/admin"
+              class="flex items-center rounded-lg h-10 px-3 text-sm font-medium transition-all group"
               :class="[
-                'mt-2 flex h-12 items-center rounded px-3 text-sm font-medium transition-all',
-                isDashboardActive
-                  ? 'bg-orange-400 text-white'
-                  : 'hover:bg-orange-400 hover:text-white',
-                sidebarOpen ? 'w-full' : 'w-12 justify-center px-0'
+                isDashboardActive ? 'bg-gray-200 text-gray-900' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+                sidebarOpen ? 'w-full' : 'w-10 justify-center px-0'
               ]"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="h-5 w-5" :class="sidebarOpen ? 'mr-2' : ''" viewBox="0 0 24 24">
-                <path d="M19.56 23.253H4.44a4.051 4.051 0 0 1-4.05-4.05v-9.115c0-1.317.648-2.56 1.728-3.315l7.56-5.292a4.062 4.062 0 0 1 4.644 0l7.56 5.292a4.056 4.056 0 0 1 1.728 3.315v9.115a4.051 4.051 0 0 1-4.05 4.05zM12 2.366a2.45 2.45 0 0 0-1.393.443l-7.56 5.292a2.433 2.433 0 0 0-1.037 1.987v9.115c0 1.34 1.09 2.43 2.43 2.43h15.12c1.34 0 2.43-1.09 2.43-2.43v-9.115c0-.788-.389-1.533-1.037-1.987l-7.56-5.292A2.438 2.438 0 0 0 12 2.377z" />
-                <path d="M16.32 23.253H7.68a.816.816 0 0 1-.81-.81v-5.4c0-2.83 2.3-5.13 5.13-5.13s5.13 2.3 5.13 5.13v5.4c0 .443-.367.81-.81.81zm-7.83-1.62h7.02v-4.59c0-1.933-1.577-3.51-3.51-3.51s-3.51 1.577-3.51 3.51z" />
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 shrink-0" :class="sidebarOpen ? 'mr-3' : ''">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
               </svg>
               <span v-if="sidebarOpen">Dashboard</span>
             </router-link>
           </li>
           <li>
-            <a
-              href="javascript:void(0)"
-              class="mt-2 flex h-12 items-center rounded px-3 text-sm font-medium transition-all hover:bg-orange-400 hover:text-white"
-              :class="sidebarOpen ? 'w-full' : 'w-12 justify-center px-0'"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="h-5 w-5" :class="sidebarOpen ? 'mr-2' : ''" viewBox="0 0 16 16">
-                <path d="M13 .5H3A2.503 2.503 0 0 0 .5 3v10A2.503 2.503 0 0 0 3 15.5h10a2.503 2.503 0 0 0 2.5-2.5V3A2.503 2.503 0 0 0 13 .5ZM14.5 13a1.502 1.502 0 0 1-1.5 1.5H3A1.502 1.502 0 0 1 1.5 13v-.793l3.5-3.5 1.647 1.647a.5.5 0 0 0 .706 0L10.5 7.207V8a.5.5 0 0 0 1 0V6a.502.502 0 0 0-.5-.5H9a.5.5 0 0 0 0 1h.793L7 9.293 5.354 7.647a.5.5 0 0 0-.707 0L1.5 10.793V3A1.502 1.502 0 0 1 3 1.5h10A1.502 1.502 0 0 1 14.5 3Z" />
-              </svg>
-              <span v-if="sidebarOpen">Insight</span>
-            </a>
-          </li>
-          <li>
-            <a
-              href="javascript:void(0)"
-              class="mt-2 flex h-12 items-center rounded px-3 text-sm font-medium transition-all hover:bg-orange-400 hover:text-white"
-              :class="sidebarOpen ? 'w-full' : 'w-12 justify-center px-0'"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="h-5 w-5" :class="sidebarOpen ? 'mr-2' : ''" viewBox="0 0 512 512">
-                <path d="M122.39 165.78h244.87c10.49 0 19-8.51 19-19s-8.51-19-19-19H122.39c-10.49 0-19 8.51-19 19s8.51 19 19 19zm164.33 99.44c0-10.49-8.51-19-19-19H122.39c-10.49 0-19 8.51-19 19s8.51 19 19 19h145.33c10.49 0 19-8.51 19-19z" />
-                <path d="M486.63 323.71c2.04-22.33 3.41-48.35 3.44-78.68-.06-57.07-4.85-98.86-9.96-129.57-8.94-50.6-54.9-96.56-105.5-105.5C343.9 4.85 302.11.06 245.03 0c-57.07.06-98.87 4.85-129.58 9.96C64.86 18.9 18.9 64.86 9.96 115.46 4.85 146.17.07 187.96 0 245.03c.07 57.07 4.85 98.87 9.96 129.58 8.94 50.6 54.9 96.56 105.5 105.5 30.71 5.11 72.5 9.89 129.58 9.96 30.32-.03 56.34-1.4 78.66-3.44 19.84 15.87 45 25.37 72.38 25.37 64.02 0 115.93-51.9 115.93-115.92 0-27.38-9.5-52.54-25.37-72.37zM245.04 452.07c-45.02-.05-85.3-3.13-123.13-9.41-16.81-3.01-33.84-12.44-47.95-26.55s-23.53-31.13-26.55-47.95c-6.28-37.79-9.35-78.07-9.41-123.13.05-45.04 3.13-85.32 9.41-123.13 3.01-16.81 12.44-33.83 26.55-47.94s31.13-23.53 47.95-26.55C159.72 41.13 200 38.06 245.04 38c45.02.05 85.3 3.13 123.13 9.41 16.81 3.01 33.83 12.44 47.95 26.55 14.11 14.11 23.53 31.13 26.55 47.95 6.28 37.83 9.35 78.1 9.41 123.13-.02 16.9-.48 33.11-1.36 48.79-16.28-8.72-34.88-13.66-54.64-13.66-64.02 0-115.93 51.9-115.93 115.92 0 19.76 4.95 38.35 13.66 54.63-15.68.88-31.89 1.34-48.78 1.35zM396.08 474c-42.97 0-77.93-34.95-77.93-77.92s34.96-77.92 77.93-77.92 77.93 34.95 77.93 77.92S439.05 474 396.08 474z" />
-                <path d="M406.28 418.24c-2.42-.4-5.71-.78-10.2-.78s-7.78.38-10.2.78c-3.98.7-7.6 4.32-8.31 8.31-.4 2.42-.78 5.71-.78 10.2s.38 7.78.78 10.2c.7 3.98 4.32 7.6 8.31 8.31 2.42.4 5.71.78 10.2.78s7.78-.38 10.2-.78c3.98-.7 7.6-4.32 8.31-8.31.4-2.42.78-5.71.78-10.2s-.38-7.78-.78-10.2c-.7-3.98-4.32-7.6-8.31-8.31zm-10.21-12.61c10.49 0 19-8.51 19-19v-31.7c0-10.49-8.51-19-19-19s-19 8.51-19 19v31.7c0 10.49 8.51 19 19 19z" />
-              </svg>
-              <span v-if="sidebarOpen">People & Terms</span>
-            </a>
-          </li>
-        </ul>
-      </div>
-
-      <div class="mt-2 border-t border-gray-300"></div>
-
-      <div class="w-full px-1">
-        <ul class="mt-2 flex-1" :class="!sidebarOpen ? 'flex flex-col items-center' : ''">
-          <li>
             <router-link
-              to="/admin/products"
-              class="mt-2 flex h-12 items-center rounded px-3 text-sm font-medium transition-all"
+              to="/admin/orders"
+              class="flex items-center rounded-lg h-10 px-3 text-sm font-medium transition-all group"
               :class="[
-                isProductsActive
-                  ? 'bg-orange-400 text-white'
-                  : 'hover:bg-orange-400 hover:text-white',
-                sidebarOpen ? 'w-full' : 'w-12 justify-center px-0'
+                isOrdersActive ? 'bg-gray-200 text-gray-900' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+                sidebarOpen ? 'w-full' : 'w-10 justify-center px-0'
               ]"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="h-5 w-5" :class="sidebarOpen ? 'mr-2' : ''" viewBox="0 0 511.414 511.414">
-                <path d="M497.695 108.838a16.002 16.002 0 0 0-9.92-14.8L261.787 1.2a16.003 16.003 0 0 0-12.16 0L23.639 94.038a16 16 0 0 0-9.92 14.8v293.738a16 16 0 0 0 9.92 14.8l225.988 92.838a15.947 15.947 0 0 0 12.14-.001c.193-.064-8.363 3.445 226.008-92.837a16 16 0 0 0 9.92-14.8zm-241.988 76.886-83.268-34.207L352.39 73.016l88.837 36.495zm-209.988-51.67 71.841 29.513v83.264c0 8.836 7.164 16 16 16s16-7.164 16-16v-70.118l90.147 37.033v257.797L45.719 391.851zM255.707 33.297l55.466 22.786-179.951 78.501-61.035-25.074zm16 180.449 193.988-79.692v257.797l-193.988 79.692z" />
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 shrink-0" :class="sidebarOpen ? 'mr-3' : ''">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
               </svg>
-              <span v-if="sidebarOpen">Product</span>
+              <span v-if="sidebarOpen" class="flex-1">Orders</span>
+              <span v-if="sidebarOpen" class="inline-flex items-center justify-center w-5 h-5 ml-2 text-xs font-semibold text-white bg-blue-600 rounded-full">3</span>
             </router-link>
           </li>
           <li>
-            <a
-              href="javascript:void(0)"
-              class="mt-2 flex h-12 items-center rounded px-3 text-sm font-medium transition-all hover:bg-orange-400 hover:text-white"
-              :class="sidebarOpen ? 'w-full' : 'w-12 justify-center px-0'"
+            <router-link
+              to="/admin/products"
+              class="flex items-center rounded-lg h-10 px-3 text-sm font-medium transition-all group"
+              :class="[
+                isProductsActive ? 'bg-gray-200 text-gray-900' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+                sidebarOpen ? 'w-full' : 'w-10 justify-center px-0'
+              ]"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" stroke="currentColor" class="h-5 w-5" :class="sidebarOpen ? 'mr-2' : ''" viewBox="0 0 682.667 682.667">
-                <defs>
-                  <clipPath id="sidebarClip" clipPathUnits="userSpaceOnUse">
-                    <path d="M0 512h512V0H0Z" />
-                  </clipPath>
-                </defs>
-                <g clip-path="url(#sidebarClip)" transform="matrix(1.33 0 0 -1.33 0 682.667)">
-                  <path fill="none" stroke-miterlimit="10" stroke-width="40" d="M452 444H60c-22.091 0-40-17.909-40-40v-39.446l212.127-157.782c14.17-10.54 33.576-10.54 47.746 0L492 364.554V404c0 22.091-17.909 40-40 40Z" />
-                  <path d="M472 274.9V107.999c0-11.027-8.972-20-20-20H60c-11.028 0-20 8.973-20 20V274.9L0 304.652V107.999c0-33.084 26.916-60 60-60h392c33.084 0 60 26.916 60 60v196.653Z" />
-                </g>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 shrink-0" :class="sidebarOpen ? 'mr-3' : ''">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75v-3a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3c0 .414.336.75.75.75Z" />
+              </svg>
+              <span v-if="sidebarOpen">Products</span>
+            </router-link>
+          </li>
+        </ul>
+      </div>
+
+      <!-- MANAGEMENT SECTION -->
+      <div>
+        <h4 v-if="sidebarOpen" class="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Management</h4>
+        <ul class="space-y-1" :class="!sidebarOpen ? 'flex flex-col items-center' : ''">
+          <li>
+            <router-link
+              to="/admin/customers"
+              class="flex items-center rounded-lg h-10 px-3 text-sm font-medium transition-all group"
+              :class="[
+                isCustomersActive ? 'bg-gray-200 text-gray-900' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+                sidebarOpen ? 'w-full' : 'w-10 justify-center px-0'
+              ]"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 shrink-0" :class="sidebarOpen ? 'mr-3' : ''">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+              </svg>
+              <span v-if="sidebarOpen">Customers</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link
+              to="/admin/promotions"
+              class="flex items-center rounded-lg h-10 px-3 text-sm font-medium transition-all group"
+              :class="[
+                isPromotionsActive ? 'bg-gray-200 text-gray-900' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+                sidebarOpen ? 'w-full' : 'w-10 justify-center px-0'
+              ]"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 shrink-0" :class="sidebarOpen ? 'mr-3' : ''">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6Z" />
+              </svg>
+              <span v-if="sidebarOpen">Promotions</span>
+            </router-link>
+          </li>
+        </ul>
+      </div>
+
+      <!-- SUPPORT SECTION -->
+      <div>
+        <h4 v-if="sidebarOpen" class="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Support</h4>
+        <ul class="space-y-1" :class="!sidebarOpen ? 'flex flex-col items-center' : ''">
+          <li>
+            <router-link
+              to="/admin/inbox"
+              class="flex items-center rounded-lg h-10 px-3 text-sm font-medium transition-all group"
+              :class="[
+                isInboxActive ? 'bg-gray-200 text-gray-900' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+                sidebarOpen ? 'w-full' : 'w-10 justify-center px-0'
+              ]"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 shrink-0" :class="sidebarOpen ? 'mr-3' : ''">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.909A2.25 2.25 0 0 1 2.25 8.665V6.75m19.5 0V8.665c0 .41-.176.793-.473 1.053l-7.5 6.55a2.25 2.25 0 0 1-2.364 0l-7.5-6.554A1.5 1.5 0 0 1 2.25 8.665V6.75" />
               </svg>
               <span v-if="sidebarOpen">Inbox</span>
-            </a>
+            </router-link>
           </li>
           <li>
-            <a
-              href="javascript:void(0)"
-              class="mt-2 flex h-12 items-center rounded px-3 text-sm font-medium transition-all hover:bg-orange-400 hover:text-white"
-              :class="sidebarOpen ? 'w-full' : 'w-12 justify-center px-0'"
+            <router-link
+              to="/admin/refunds"
+              class="flex items-center rounded-lg h-10 px-3 text-sm font-medium transition-all group"
+              :class="[
+                isRefundsActive ? 'bg-gray-200 text-gray-900' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+                sidebarOpen ? 'w-full' : 'w-10 justify-center px-0'
+              ]"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="h-5 w-5" :class="sidebarOpen ? 'mr-2' : ''" viewBox="0 0 193.769 193.769">
-                <path d="m149.203 41.104-9.348 12.009c20.15 15.679 30.201 41.063 26.234 66.253-2.906 18.484-12.838 34.73-27.964 45.748-15.131 11.012-33.64 15.488-52.124 12.567-38.157-6.008-64.32-41.938-58.322-80.098C30.585 79.097 40.52 62.85 55.648 51.835c13.208-9.615 28.991-14.233 45.086-13.317L87.579 52.319l9.759 9.313 20.766-21.801.005.008 9.303-9.769-9.752-9.303-.005.003L95.862 0l-9.31 9.769 14.2 13.525c-19.303-.913-38.21 4.702-54.059 16.242C28.28 52.943 16.19 72.717 12.65 95.221c-7.302 46.445 24.54 90.184 70.985 97.493a86.181 86.181 0 0 0 13.434 1.055c17.89 0 35.273-5.623 50.011-16.356 18.415-13.409 30.503-33.183 34.043-55.682 4.829-30.654-7.403-61.55-31.92-80.627z" />
-                <path d="M105.24 151.971v-.003h.001v-8.757c10.383-1.159 20.485-7.718 20.485-20.17 0-16.919-15.732-18.859-27.223-20.274-7.347-.878-12.97-1.897-12.97-6.348 0-6.188 8.722-6.855 12.473-6.855 5.567 0 11.507 2.617 13.525 5.957l.586.971 11.542-5.341-.571-1.164c-4.301-8.793-12.009-11.337-17.85-12.364v-7.71H91.723v7.677c-12.582 1.856-20.054 8.839-20.054 18.829 0 16.29 14.791 17.943 25.582 19.153 9.617 1.134 14.094 3.51 14.094 7.469 0 7.563-10.474 8.154-13.685 8.154-7.147 0-14.038-3.566-16.031-8.301l-.495-1.169-12.539 5.316.5 1.169c3.713 8.691 11.725 14.137 22.63 15.425v8.336h13.515z" />
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 shrink-0" :class="sidebarOpen ? 'mr-3' : ''">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
               </svg>
               <span v-if="sidebarOpen">Refunds</span>
-            </a>
+            </router-link>
           </li>
         </ul>
       </div>
 
-      <div class="mt-2 border-t border-gray-300"></div>
+    </div>
 
-      <div class="mt-auto w-full px-1">
-        <ul :class="sidebarOpen ? '' : 'flex flex-col items-center'">
-          <li>
-            <a 
-                href="javascript:void(0)" 
-                class="mt-2 flex h-12 items-center rounded px-3 text-sm font-medium transition-all hover:bg-orange-400 hover:text-white"
-                :class="sidebarOpen ? 'w-full' : 'w-12 justify-center px-0'"
-            >
-                <i 
-                class="ri-settings-3-line text-lg" 
-                :class="sidebarOpen ? 'mr-2' : ''"
-                ></i>
-
-                <span v-if="sidebarOpen">Settings</span>
-            </a>
-            </li>
-          <li>
-            <a
-              href="javascript:void(0)"
-              class="mt-2 flex h-12 items-center rounded px-3 text-sm font-medium transition-all hover:bg-orange-400 hover:text-white"
-              :class="sidebarOpen ? 'w-full' : 'w-12 justify-center px-0'"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="h-5 w-5" :class="sidebarOpen ? 'mr-2' : ''" viewBox="0 0 512 512">
-                <path d="M437.02 74.98C388.668 26.63 324.379 0 256 0S123.332 26.629 74.98 74.98C26.63 123.332 0 187.621 0 256s26.629 132.668 74.98 181.02C123.332 485.37 187.621 512 256 512s132.668-26.629 181.02-74.98C485.37 388.668 512 324.379 512 256s-26.629-132.668-74.98-181.02zM111.105 429.297c8.454-72.735 70.989-128.89 144.895-128.89 38.96 0 75.598 15.179 103.156 42.734 23.281 23.285 37.965 53.687 41.742 86.152C361.641 462.172 311.094 482 256 482s-105.637-19.824-144.895-52.703zM256 269.507c-42.871 0-77.754-34.882-77.754-77.753C178.246 148.879 213.13 114 256 114s77.754 34.879 77.754 77.754c0 42.871-34.883 77.754-77.754 77.754zm170.719 134.427a175.9 175.9 0 0 0-46.352-82.004c-18.437-18.438-40.25-32.27-64.039-40.938 28.598-19.394 47.426-52.16 47.426-89.238C363.754 132.34 315.414 84 256 84s-107.754 48.34-107.754 107.754c0 37.098 18.844 69.875 47.465 89.266-21.887 7.976-42.14 20.308-59.566 36.542-25.235 23.5-42.758 53.465-50.883 86.348C50.852 364.242 30 312.512 30 256 30 131.383 131.383 30 256 30s226 101.383 226 226c0 56.523-20.86 108.266-55.281 147.934zm0 0" />
-              </svg>
-              <span v-if="sidebarOpen">Profile</span>
-            </a>
-          </li>
-        </ul>
-
-        <a
-          href="javascript:void(0)"
-          class="mt-3 flex h-16 items-center hover:text-white"
-          :class="sidebarOpen ? 'w-full rounded px-3' : 'w-12 justify-center rounded mx-auto bg-white'"
-        >
-          <img src="https://randomuser.me/api/portraits/men/32.jpg" class="h-8 w-8 rounded-full" alt="Admin" />
-          <div v-if="sidebarOpen" class="ml-2">
-            <p class="text-sm font-medium text-gray-700">Admin</p>
-          </div>
-        </a>
-      </div>
+    <!-- User Profile Area at Bottom -->
+    <div class="mt-auto border-t border-gray-100 pt-4" :class="sidebarOpen ? 'px-1' : 'flex flex-col items-center'">
+      <a href="javascript:void(0)" class="flex items-center rounded-lg hover:bg-gray-100 transition-colors" :class="sidebarOpen ? 'p-2 w-full' : 'p-1.5 w-10 justify-center'">
+        <img src="https://randomuser.me/api/portraits/men/32.jpg" class="h-8 w-8 rounded-full border border-gray-200" alt="Admin" />
+        <div v-if="sidebarOpen" class="ml-3 flex-1 overflow-hidden">
+          <p class="text-sm font-medium text-gray-900 truncate">Admin Store</p>
+          <p class="text-xs text-gray-500 truncate">admin@markhub.com</p>
+        </div>
+      </a>
     </div>
   </nav>
 </template>
