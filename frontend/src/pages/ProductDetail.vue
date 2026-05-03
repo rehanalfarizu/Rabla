@@ -213,7 +213,7 @@ watch(
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center py-10 px-4">
+  <div :class="isModal ? '' : 'min-h-screen flex items-center justify-center py-10 px-4'">
     <div class="relative w-full max-w-6xl bg-white rounded-xl border border-gray-300 overflow-hidden">
 
       <button

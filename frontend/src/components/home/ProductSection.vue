@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import ProductDetail from '../../pages/ProductDetail.vue'
 
 const props = defineProps({
   title: { type: String, default: 'Produk Unggulan' },
@@ -8,12 +9,28 @@ const props = defineProps({
   products: { type: Array, required: true }
 })
 
+// ── Wishlist ────────────────────────────────────────────────
 const wishlist = ref(new Set())
-const toggleWish = (id) => {
+const toggleWish = (id, e) => {
+  e.stopPropagation()
   if (wishlist.value.has(id)) wishlist.value.delete(id)
   else wishlist.value.add(id)
 }
 
+// ── Modal ────────────────────────────────────────────────────
+const selectedProductId = ref(null)
+
+const openModal = (product) => {
+  selectedProductId.value = product.id
+  document.body.style.overflow = 'hidden'
+}
+
+const closeModal = () => {
+  selectedProductId.value = null
+  document.body.style.overflow = ''
+}
+
+// ── Helpers ──────────────────────────────────────────────────
 const formatPrice = (n) => 'Rp ' + n.toLocaleString('id-ID')
 </script>
 
@@ -40,7 +57,8 @@ const formatPrice = (n) => 'Rp ' + n.toLocaleString('id-ID')
         <div
           v-for="product in products"
           :key="product.id"
-          class="group relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col"
+          @click="openModal(product)"
+          class="group relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col cursor-pointer"
         >
           <!-- Badge -->
           <div v-if="product.badge" class="absolute top-3 left-3 z-10">
@@ -51,7 +69,7 @@ const formatPrice = (n) => 'Rp ' + n.toLocaleString('id-ID')
 
           <!-- Wishlist button -->
           <button
-            @click="toggleWish(product.id)"
+            @click.stop="toggleWish(product.id, $event)"
             class="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white shadow flex items-center justify-center transition-transform hover:scale-110"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4 h-4 transition-colors"
@@ -62,20 +80,20 @@ const formatPrice = (n) => 'Rp ' + n.toLocaleString('id-ID')
           </button>
 
           <!-- Image -->
-          <router-link :to="`/products/${product.id}`" class="block overflow-hidden aspect-square bg-gray-50">
+          <div class="overflow-hidden aspect-square bg-gray-50">
             <img
               :src="product.img"
               :alt="product.name"
               class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
             />
-          </router-link>
+          </div>
 
           <!-- Info -->
           <div class="p-4 flex flex-col flex-1">
             <p class="text-xs text-slate-400 uppercase tracking-wide mb-1">{{ product.category }}</p>
-            <router-link :to="`/products/${product.id}`" class="text-sm font-semibold text-slate-800 hover:text-indigo-600 transition-colors leading-snug line-clamp-2">
+            <p class="text-sm font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors leading-snug line-clamp-2">
               {{ product.name }}
-            </router-link>
+            </p>
 
             <!-- Stars -->
             <div class="flex items-center gap-1 mt-2">
@@ -94,16 +112,66 @@ const formatPrice = (n) => 'Rp ' + n.toLocaleString('id-ID')
               <span v-if="product.discount" class="ml-auto text-xs font-semibold text-rose-500">-{{ product.discount }}%</span>
             </div>
 
-            <!-- Add to cart -->
-            <button class="mt-3 w-full py-2.5 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-indigo-600 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2">
+            <!-- Quick view button -->
+            <button
+              @click.stop="openModal(product)"
+              class="mt-3 w-full py-2.5 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-indigo-600 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2"
+            >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
               </svg>
-              Add to Cart
+              Quick View
             </button>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- ── Modal ──────────────────────────────────────────────── -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div
+          v-if="selectedProductId !== null"
+          class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6"
+        >
+          <!-- Backdrop -->
+          <div
+            class="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            @click="closeModal"
+          ></div>
+
+          <!-- Modal Panel: render ProductDetail as modal -->
+          <div class="relative z-10 w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-2xl shadow-2xl">
+            <ProductDetail
+              :product-id="selectedProductId"
+              :is-modal="true"
+              @close="closeModal"
+            />
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </section>
 </template>
+
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.2s ease;
+}
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-active .relative.z-10,
+.modal-leave-active .relative.z-10 {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+}
+.modal-enter-from .relative.z-10,
+.modal-leave-to .relative.z-10 {
+  transform: scale(0.94) translateY(16px);
+  opacity: 0;
+}
+</style>
