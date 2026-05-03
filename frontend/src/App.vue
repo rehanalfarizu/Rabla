@@ -5,7 +5,10 @@ import Navbar from './layouts/Navbar.vue'
 import Footer from './layouts/Footer.vue'
 
 const route = useRoute()
-const showNavbar = computed(() => !route.path.startsWith('/admin'))
+const showNavbar = computed(() =>
+  !route.path.startsWith('/admin') &&
+  !['Login', 'Register', 'CompleteProfile'].includes(route.name)
+)
 </script>
 
 <template>
