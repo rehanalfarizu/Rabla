@@ -2,6 +2,39 @@
 import { ref, computed } from 'vue'
 import AdminSidebar from '../layouts/AdminSidebar.vue'
 
+// Modal State
+const showPromoModal = ref(false)
+
+const createEmptyPromo = () => ({
+  name: '', type: 'Discount', code: '', value: '', valueType: 'fixed',
+  expiryDate: '', status: 'Active', usageLimit: ''
+})
+
+const promoForms = ref([createEmptyPromo()])
+
+const addPromoForm = () => promoForms.value.push(createEmptyPromo())
+const removePromoForm = (i) => { if (promoForms.value.length > 1) promoForms.value.splice(i, 1) }
+
+const openPromoModal = () => {
+  promoForms.value = [createEmptyPromo()]
+  showPromoModal.value = true
+}
+const closePromoModal = () => { showPromoModal.value = false }
+
+const submitPromos = () => {
+  const newPromos = promoForms.value.map((f, idx) => ({
+    id: promotions.value.length + idx + 1,
+    name: f.name, type: f.type,
+    code: f.code || null,
+    value: f.type === 'Free Shipping' ? 0 : f.valueType === 'percent' ? `${f.value}%` : Number(f.value),
+    usage: 0,
+    expiryDate: f.expiryDate,
+    status: f.status
+  }))
+  promotions.value.push(...newPromos)
+  closePromoModal()
+}
+
 const sidebarOpen = ref(true)
 const toggleSidebar = () => {
   sidebarOpen.value = !sidebarOpen.value
@@ -125,7 +158,7 @@ const getTypeBadgeClass = (type) => {
             <h1 class="text-2xl font-bold text-gray-900">Promotions</h1>
             <p class="text-sm text-gray-500 mt-1">Manage discounts, coupons, and seasonal sales.</p>
           </div>
-          <button class="inline-flex items-center justify-center bg-gray-900 hover:bg-gray-800 text-white rounded-xl px-5 py-2.5 text-sm font-medium transition-colors shadow-sm whitespace-nowrap">
+          <button @click="openPromoModal" class="inline-flex items-center justify-center bg-gray-900 hover:bg-gray-800 text-white rounded-xl px-5 py-2.5 text-sm font-medium transition-colors shadow-sm whitespace-nowrap">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
@@ -319,5 +352,117 @@ const getTypeBadgeClass = (type) => {
         </div>
       </div>
     </main>
+
+    <!-- Create Promotion Modal -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="showPromoModal" class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-8 px-4" style="background:rgba(0,0,0,0.5);backdrop-filter:blur(4px)">
+          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white rounded-t-2xl z-10">
+              <div>
+                <h2 class="text-lg font-bold text-gray-900">Create Promotions</h2>
+                <p class="text-xs text-gray-500 mt-0.5">Configure discounts, coupons, or free shipping offers.</p>
+              </div>
+              <button @click="closePromoModal" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="px-6 py-4 space-y-5 max-h-[70vh] overflow-y-auto">
+              <div v-for="(form, idx) in promoForms" :key="idx" class="border border-gray-200 rounded-xl p-5 bg-gray-50/50">
+                <!-- Form Header -->
+                <div class="flex items-center justify-between mb-4">
+                  <span class="text-sm font-semibold bg-gray-900 text-white px-3 py-1 rounded-full">Promotion #{{ idx + 1 }}</span>
+                  <button v-if="promoForms.length > 1" @click="removePromoForm(idx)" class="text-red-500 hover:text-red-700 text-xs font-medium flex items-center gap-1 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
+                    Remove
+                  </button>
+                </div>
+
+                <!-- Name & Type -->
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Promotion Name *</label>
+                    <input v-model="form.name" type="text" placeholder="e.g. Ramadhan Mega Sale" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Type *</label>
+                    <select v-model="form.type" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white">
+                      <option>Discount</option><option>Coupon</option><option>Free Shipping</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Code & Status -->
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Promo Code <span class="text-gray-400">(optional)</span></label>
+                    <input v-model="form.code" type="text" placeholder="e.g. NEWUSER24" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white font-mono uppercase" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                    <select v-model="form.status" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white">
+                      <option>Active</option><option>Scheduled</option><option>Expired</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Value (hidden for Free Shipping) -->
+                <div v-if="form.type !== 'Free Shipping'" class="mb-3">
+                  <label class="block text-xs font-medium text-gray-700 mb-1">Discount Value *</label>
+                  <div class="flex gap-2">
+                    <select v-model="form.valueType" class="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white">
+                      <option value="fixed">Rp (Fixed)</option>
+                      <option value="percent">% (Percent)</option>
+                    </select>
+                    <input v-model="form.value" type="number" min="0" :placeholder="form.valueType === 'percent' ? 'e.g. 10' : 'e.g. 50000'" class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white" />
+                  </div>
+                  <p class="text-[11px] text-gray-400 mt-1">
+                    Preview: <span class="font-medium text-gray-600">{{ form.valueType === 'percent' ? `${form.value || 0}% off` : `Rp${Number(form.value || 0).toLocaleString('id-ID')} off` }}</span>
+                  </p>
+                </div>
+                <div v-else class="mb-3 bg-cyan-50 border border-cyan-200 rounded-lg px-3 py-2 text-sm text-cyan-700 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/></svg>
+                  Free Shipping — no value required
+                </div>
+
+                <!-- Expiry Date & Usage Limit -->
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Expiry Date & Time *</label>
+                    <input v-model="form.expiryDate" type="datetime-local" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Usage Limit <span class="text-gray-400">(optional)</span></label>
+                    <input v-model="form.usageLimit" type="number" min="0" placeholder="e.g. 1000" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex items-center justify-between">
+              <button @click="addPromoForm" class="inline-flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-300 hover:border-gray-400 bg-white px-4 py-2 rounded-lg transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                Add Another Promotion
+              </button>
+              <div class="flex gap-3">
+                <button @click="closePromoModal" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 border border-gray-200 hover:border-gray-300 rounded-lg bg-white transition-colors">Cancel</button>
+                <button @click="submitPromos" class="px-5 py-2 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors shadow-sm">
+                  Save {{ promoForms.length > 1 ? `${promoForms.length} Promotions` : 'Promotion' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
+
+<style scoped>
+.modal-enter-active, .modal-leave-active { transition: all 0.2s ease; }
+.modal-enter-from, .modal-leave-to { opacity: 0; }
+</style>

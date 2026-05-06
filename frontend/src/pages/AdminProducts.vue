@@ -2,6 +2,83 @@
 import { ref, computed } from 'vue'
 import AdminSidebar from '../layouts/AdminSidebar.vue'
 
+// Modal State
+const showProductModal = ref(false)
+
+const createEmptyProduct = () => ({
+  name: '', brand: '', category: 'Sneakers', price: '', oldPrice: '',
+  sku: '', description: '', tags: '',
+  image: '', imagePreview: null,
+  gallery: [null, null, null, null],
+  galleryPreviews: [null, null, null, null],
+  colors: [], newColor: '',
+  sizes: [], newSize: '',
+  stock: '', status: 'Active'
+})
+
+const productForms = ref([createEmptyProduct()])
+
+const addProductForm = () => productForms.value.push(createEmptyProduct())
+const removeProductForm = (i) => { if (productForms.value.length > 1) productForms.value.splice(i, 1) }
+
+const openProductModal = () => {
+  productForms.value = [createEmptyProduct()]
+  showProductModal.value = true
+}
+const closeProductModal = () => { showProductModal.value = false }
+
+// Image upload handlers
+const handleMainImage = (event, form) => {
+  const file = event.target.files[0]
+  if (file) {
+    form.image = file.name
+    form.imagePreview = URL.createObjectURL(file)
+  }
+}
+
+const handleGalleryImage = (event, form, index) => {
+  const file = event.target.files[0]
+  if (file) {
+    form.gallery[index] = file.name
+    form.galleryPreviews[index] = URL.createObjectURL(file)
+  }
+}
+
+const clearMainImage = (form) => { form.image = ''; form.imagePreview = null }
+const clearGalleryImage = (form, i) => { form.gallery[i] = null; form.galleryPreviews[i] = null }
+
+// Color tag helpers
+const addColor = (form) => {
+  const c = form.newColor.trim()
+  if (c && !form.colors.includes(c)) { form.colors.push(c) }
+  form.newColor = ''
+}
+const removeColor = (form, i) => form.colors.splice(i, 1)
+
+// Size tag helpers
+const addSize = (form) => {
+  const s = form.newSize.trim()
+  if (s && !form.sizes.includes(s)) { form.sizes.push(s) }
+  form.newSize = ''
+}
+const removeSize = (form, i) => form.sizes.splice(i, 1)
+
+const submitProducts = () => {
+  const newProds = productForms.value.map((f, idx) => ({
+    id: products.value.length + idx + 1,
+    name: f.name, brand: f.brand, category: f.category,
+    price: Number(f.price), oldPrice: Number(f.oldPrice),
+    sku: f.sku, description: f.description,
+    tags: f.tags.split(',').map(t => t.trim()).filter(Boolean),
+    image: f.imagePreview || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=200&q=80',
+    gallery: f.galleryPreviews.filter(Boolean),
+    colors: f.colors, sizes: f.sizes,
+    stock: Number(f.stock), status: f.status, createdAt: new Date().toISOString().split('T')[0]
+  }))
+  products.value.push(...newProds)
+  closeProductModal()
+}
+
 const sidebarOpen = ref(true)
 const toggleSidebar = () => {
   sidebarOpen.value = !sidebarOpen.value
@@ -95,7 +172,7 @@ const nextPage = () => {
             <h1 class="text-2xl font-bold text-gray-900">Products</h1>
             <p class="text-sm text-gray-500 mt-1">Manage your catalog, stock, and pricing here.</p>
           </div>
-          <button class="inline-flex items-center justify-center bg-gray-900 hover:bg-gray-800 text-white rounded-xl px-5 py-2.5 text-sm font-medium transition-colors shadow-sm whitespace-nowrap">
+          <button @click="openProductModal" class="inline-flex items-center justify-center bg-gray-900 hover:bg-gray-800 text-white rounded-xl px-5 py-2.5 text-sm font-medium transition-colors shadow-sm whitespace-nowrap">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
@@ -349,5 +426,196 @@ const nextPage = () => {
         </div>
       </div>
     </main>
+
+    <!-- Add Product Modal -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="showProductModal" class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-8 px-4" style="background:rgba(0,0,0,0.5);backdrop-filter:blur(4px)">
+          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white rounded-t-2xl z-10">
+              <div>
+                <h2 class="text-lg font-bold text-gray-900">Add Products</h2>
+                <p class="text-xs text-gray-500 mt-0.5">Fill in the details below. Add multiple products at once.</p>
+              </div>
+              <button @click="closeProductModal" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="px-6 py-4 space-y-6 max-h-[70vh] overflow-y-auto">
+              <div v-for="(form, idx) in productForms" :key="idx" class="border border-gray-200 rounded-xl p-5 relative bg-gray-50/50">
+                <!-- Form Header -->
+                <div class="flex items-center justify-between mb-4">
+                  <span class="text-sm font-semibold text-gray-700 bg-gray-900 text-white px-3 py-1 rounded-full">Product #{{ idx + 1 }}</span>
+                  <button v-if="productForms.length > 1" @click="removeProductForm(idx)" class="text-red-500 hover:text-red-700 text-xs font-medium flex items-center gap-1 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
+                    Remove
+                  </button>
+                </div>
+
+                <!-- Row 1: Name & Brand -->
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Product Name *</label>
+                    <input v-model="form.name" type="text" placeholder="e.g. Nike Dunk Low" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Brand *</label>
+                    <input v-model="form.brand" type="text" placeholder="e.g. Nike" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white" />
+                  </div>
+                </div>
+
+                <!-- Row 2: Price, Old Price, SKU -->
+                <div class="grid grid-cols-3 gap-3 mb-3">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Price (Rp) *</label>
+                    <input v-model="form.price" type="number" min="0" placeholder="1500000" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Original Price (Rp)</label>
+                    <input v-model="form.oldPrice" type="number" min="0" placeholder="2000000" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">SKU</label>
+                    <input v-model="form.sku" type="text" placeholder="2,51,594" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white" />
+                  </div>
+                </div>
+
+                <!-- Row 3: Category, Stock, Status -->
+                <div class="grid grid-cols-3 gap-3 mb-3">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Category *</label>
+                    <select v-model="form.category" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white">
+                      <option>Sneakers</option><option>Apparel</option><option>Outerwear</option>
+                      <option>Accessories</option><option>Pants</option><option>Equipment</option>
+                      <option>Bags</option><option>Dresses</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Stock *</label>
+                    <input v-model="form.stock" type="number" min="0" placeholder="50" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                    <select v-model="form.status" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white">
+                      <option>Active</option><option>Draft</option><option>Out of Stock</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Description -->
+                <div class="mb-3">
+                  <label class="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                  <textarea v-model="form.description" rows="2" placeholder="Product description..." class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white resize-none"></textarea>
+                </div>
+
+                <!-- Tags -->
+                <div class="mb-3">
+                  <label class="block text-xs font-medium text-gray-700 mb-1">Tags <span class="text-gray-400">(comma-separated)</span></label>
+                  <input v-model="form.tags" type="text" placeholder="Sneakers, Sports, Casual" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white" />
+                </div>
+
+                <!-- Main Image Upload -->
+                <div class="mb-3">
+                  <label class="block text-xs font-medium text-gray-700 mb-1">Main Image *</label>
+                  <div v-if="!form.imagePreview" class="relative">
+                    <label class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-all group">
+                      <input type="file" accept="image/*" class="sr-only" @change="handleMainImage($event, form)" />
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7 text-gray-300 group-hover:text-gray-500 mb-1 transition-colors"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/></svg>
+                      <span class="text-xs text-gray-400 group-hover:text-gray-600">Click to upload main image</span>
+                      <span class="text-[10px] text-gray-300 mt-0.5">PNG, JPG, WEBP</span>
+                    </label>
+                  </div>
+                  <div v-else class="relative inline-block">
+                    <img :src="form.imagePreview" class="h-24 w-24 object-cover rounded-xl border border-gray-200" />
+                    <button @click="clearMainImage(form)" type="button" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Gallery Upload -->
+                <div class="mb-3">
+                  <label class="block text-xs font-medium text-gray-700 mb-2">Gallery Images <span class="text-gray-400">(up to 4)</span></label>
+                  <div class="grid grid-cols-4 gap-2">
+                    <div v-for="(_, gi) in form.gallery" :key="gi">
+                      <div v-if="!form.galleryPreviews[gi]">
+                        <label class="flex flex-col items-center justify-center w-full aspect-square border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-all group">
+                          <input type="file" accept="image/*" class="sr-only" @change="handleGalleryImage($event, form, gi)" />
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-300 group-hover:text-gray-500 mb-0.5 transition-colors"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                          <span class="text-[10px] text-gray-300">{{ gi + 1 }}</span>
+                        </label>
+                      </div>
+                      <div v-else class="relative">
+                        <img :src="form.galleryPreviews[gi]" class="w-full aspect-square object-cover rounded-lg border border-gray-200" />
+                        <button @click="clearGalleryImage(form, gi)" type="button" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Colors Tag Input -->
+                <div class="mb-3">
+                  <label class="block text-xs font-medium text-gray-700 mb-1.5">Available Colors</label>
+                  <div class="flex flex-wrap gap-1.5 mb-2" v-if="form.colors.length">
+                    <span v-for="(c, ci) in form.colors" :key="ci" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-xs font-medium transition-colors">
+                      {{ c }}
+                      <button @click="removeColor(form, ci)" type="button" class="text-gray-400 hover:text-red-500 ml-0.5 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+                      </button>
+                    </span>
+                  </div>
+                  <div class="flex gap-2">
+                    <input v-model="form.newColor" @keyup.enter="addColor(form)" type="text" placeholder="e.g. Merah, Kuning, Navy..." class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white" />
+                    <button @click="addColor(form)" type="button" class="px-3 py-2 bg-gray-900 hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition-colors">+ Add</button>
+                  </div>
+                </div>
+
+                <!-- Sizes Tag Input -->
+                <div>
+                  <label class="block text-xs font-medium text-gray-700 mb-1.5">Available Sizes</label>
+                  <div class="flex flex-wrap gap-1.5 mb-2" v-if="form.sizes.length">
+                    <span v-for="(s, si) in form.sizes" :key="si" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-900 text-white rounded-full text-xs font-medium">
+                      {{ s }}
+                      <button @click="removeSize(form, si)" type="button" class="text-gray-400 hover:text-red-400 ml-0.5 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+                      </button>
+                    </span>
+                  </div>
+                  <div class="flex gap-2">
+                    <input v-model="form.newSize" @keyup.enter="addSize(form)" type="text" placeholder="e.g. S, M, L, XL, 42, 43..." class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white" />
+                    <button @click="addSize(form)" type="button" class="px-3 py-2 bg-gray-900 hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition-colors">+ Add</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex items-center justify-between">
+              <button @click="addProductForm" class="inline-flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-300 hover:border-gray-400 bg-white px-4 py-2 rounded-lg transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                Add Another Product
+              </button>
+              <div class="flex gap-3">
+                <button @click="closeProductModal" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 border border-gray-200 hover:border-gray-300 rounded-lg bg-white transition-colors">Cancel</button>
+                <button @click="submitProducts" class="px-5 py-2 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors shadow-sm">
+                  Save {{ productForms.length > 1 ? `${productForms.length} Products` : 'Product' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
+
+<style scoped>
+.modal-enter-active, .modal-leave-active { transition: all 0.2s ease; }
+.modal-enter-from, .modal-leave-to { opacity: 0; }
+.modal-enter-from .bg-white, .modal-leave-to .bg-white { transform: scale(0.95); }
+</style>
