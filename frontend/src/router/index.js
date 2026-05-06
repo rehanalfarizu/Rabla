@@ -17,6 +17,7 @@ import Register from '../pages/Register.vue'
 import CompleteProfile from '../pages/CompleteProfile.vue'
 import UserProfile from '../pages/UserProfile.vue'
 import NotFound from '../pages/NotFound.vue'
+import OTPVerification from '../pages/OTPVerification.vue'
 
 const routes = [
   {
@@ -79,6 +80,11 @@ const routes = [
     name: 'CompleteProfile',
     component: CompleteProfile,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/otp-verification',
+    name: 'OTPVerification',
+    component: OTPVerification
   },
   {
     path: '/profile',

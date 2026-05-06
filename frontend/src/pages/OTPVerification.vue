@@ -1,8 +1,10 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import ToastAlert from '../components/ToastAlert.vue'
 
 const router = useRouter()
+const toastAlert = ref(null)
 
 // Konfigurasi
 const OTP_LENGTH = 6
@@ -123,8 +125,10 @@ const resendCode = async () => {
     // Reset input
     otpValues.value = Array(OTP_LENGTH).fill('')
     if (inputRefs.value[0]) inputRefs.value[0].focus()
+    toastAlert.value.show('success', 'Kode OTP baru telah dikirim!')
   } catch (error) {
     errorMessage.value = 'Gagal mengirim ulang kode.'
+    toastAlert.value.show('error', 'Gagal mengirim ulang kode.')
   } finally {
     isResending.value = false
   }
@@ -148,13 +152,15 @@ const verifyCode = async () => {
     // Anggap '123456' adalah kode yang benar untuk testing
     if (code === '123456') { 
       // Sukses
-      alert('Verifikasi berhasil!')
-      router.push('/')
+      toastAlert.value.show('success', 'Verifikasi berhasil!')
+      setTimeout(() => router.push('/complete-profile'), 1500)
     } else {
       errorMessage.value = 'Kode OTP salah atau sudah kadaluarsa.'
+      toastAlert.value.show('error', 'Kode OTP salah!')
     }
   } catch (error) {
     errorMessage.value = 'Terjadi kesalahan saat verifikasi.'
+    toastAlert.value.show('error', 'Terjadi kesalahan sistem.')
   } finally {
     isVerifying.value = false
   }
@@ -163,6 +169,7 @@ const verifyCode = async () => {
 
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <ToastAlert ref="toastAlert" />
     <div class="max-w-md w-full space-y-8 bg-white p-8 sm:p-10 rounded-2xl shadow-xl">
       <div class="text-center">
         <h2 class="mt-2 text-2xl sm:text-3xl font-extrabold text-gray-900">

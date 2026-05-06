@@ -49,8 +49,8 @@ const handleRegister = async (e) => {
     else credentials.push(entry)
     localStorage.setItem('auth_credentials', JSON.stringify(credentials))
 
-    // Redirect ke halaman lengkapi profil
-    router.push('/complete-profile')
+    // Redirect ke halaman OTP untuk verifikasi
+    router.push('/otp-verification')
   } catch (err) {
     errorMsg.value = 'Registrasi gagal. Silakan coba lagi.'
     console.error(err)
