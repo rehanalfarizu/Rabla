@@ -11,14 +11,14 @@ onBeforeUnmount(() => { document.body.style.overflow = '' })
 
 // ─── Mock product data (ganti dengan API call nanti) ─────────────────────────
 const products = [
-  { id: 1,  name: 'New Balance 530',    brand: 'New Balance', category: 'Sneakers',    price: 1490000, oldPrice: 1990000, rating: 4.5, stock: true,  colors: ['blue','gray'],       sizes: ['40','41','42','43'] },
-  { id: 2,  name: 'Puffer Jacket',       brand: 'Uniqlo',      category: 'Jacket',      price: 899000,  oldPrice: 1200000, rating: 4.0, stock: true,  colors: ['black','orange'],    sizes: ['S','M','L','XL'] },
-  { id: 3,  name: 'Floral Dress',        brand: 'Zara',        category: 'Dress',       price: 750000,  oldPrice: 950000,  rating: 3.5, stock: false, colors: ['pink','white'],      sizes: ['XS','S','M'] },
-  { id: 4,  name: 'Classic Watch',       brand: 'Adidas',      category: 'Watch',       price: 2500000, oldPrice: 3000000, rating: 5.0, stock: true,  colors: ['black'],             sizes: [] },
-  { id: 5,  name: 'Aviator Sunglasses',  brand: 'Zara',        category: 'Sunglasses',  price: 450000,  oldPrice: 600000,  rating: 4.2, stock: true,  colors: ['black','yellow'],    sizes: [] },
-  { id: 6,  name: 'Canvas Backpack',     brand: 'Nike',        category: 'Backpack',    price: 690000,  oldPrice: 890000,  rating: 3.8, stock: false, colors: ['gray','blue'],       sizes: [] },
-  { id: 7,  name: 'Slim Chinos',         brand: "Levi's",      category: 'Pants',       price: 580000,  oldPrice: 750000,  rating: 4.1, stock: true,  colors: ['black','orange'],    sizes: ['S','M','L','XL','XXL'] },
-  { id: 8,  name: 'Polo Shirt',          brand: 'H&M',         category: 'Tops',        price: 320000,  oldPrice: 420000,  rating: 3.0, stock: true,  colors: ['white','blue','red'], sizes: ['S','M','L'] },
+  { id: 1,  name: 'New Balance 530',    brand: 'New Balance', category: 'Sneakers',    price: 1490000, oldPrice: 1990000, rating: 4.5, stock: true,  colors: ['blue','gray'],       sizes: ['40','41','42','43'], image: 'https://via.placeholder.com/300x300?text=NB+530' }, 
+  { id: 2,  name: 'Puffer Jacket',       brand: 'Uniqlo',      category: 'Jacket',      price: 899000,  oldPrice: 1200000, rating: 4.0, stock: true,  colors: ['black','orange'],    sizes: ['S','M','L','XL'], image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' },
+  { id: 3,  name: 'Floral Dress',        brand: 'Zara',        category: 'Dress',       price: 750000,  oldPrice: 950000,  rating: 3.5, stock: false, colors: ['pink','white'],      sizes: ['XS','S','M'], image: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' },
+  { id: 4,  name: 'Classic Watch',       brand: 'Adidas',      category: 'Watch',       price: 2500000, oldPrice: 3000000, rating: 5.0, stock: true,  colors: ['black'],             sizes: [], image: 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' },
+  { id: 5,  name: 'Aviator Sunglasses',  brand: 'Zara',        category: 'Sunglasses',  price: 450000,  oldPrice: 600000,  rating: 4.2, stock: true,  colors: ['black','yellow'],    sizes: [], image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' },
+  { id: 6,  name: 'Canvas Backpack',     brand: 'Nike',        category: 'Backpack',    price: 690000,  oldPrice: 890000,  rating: 3.8, stock: false, colors: ['gray','blue'],       sizes: [], image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' },
+  { id: 7,  name: 'Slim Chinos',         brand: "Levi's",      category: 'Pants',       price: 580000,  oldPrice: 750000,  rating: 4.1, stock: true,  colors: ['black','orange'],    sizes: ['S','M','L','XL','XXL'], image: 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' },
+  { id: 8,  name: 'Polo Shirt',          brand: 'H&M',         category: 'Tops',        price: 320000,  oldPrice: 420000,  rating: 3.0, stock: true,  colors: ['white','blue','red'], sizes: ['S','M','L'], image: 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' },
 ]
 
 // ─── Filter State ─────────────────────────────────────────────────────────────
