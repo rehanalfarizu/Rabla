@@ -15,6 +15,8 @@ const isHomeActive = computed(() => route.path === '/')
 const isProductsActive = computed(() => route.path.startsWith('/products'))
 
 const showBanner = ref(true)
+const showNavbar = ref(true)
+const lastScrollY = ref(0)
 
 // --- Auth State ---
 const isLoggedIn = ref(false)
@@ -35,6 +37,20 @@ const userInitial = computed(() => {
 
 const userName = computed(() => authUser.value?.name || authUser.value?.email || 'User')
 
+const handleScroll = () => {
+  const currentScroll = window.scrollY
+
+  if (currentScroll > lastScrollY.value && currentScroll > 80) {
+    // scroll ke bawah
+    showNavbar.value = false
+  } else {
+    // scroll ke atas
+    showNavbar.value = true
+  }
+
+  lastScrollY.value = currentScroll
+}
+
 // Close dropdown saat klik di luar
 const handleClickOutside = (e) => {
   if (dropdownRef.value && !dropdownRef.value.contains(e.target)) {
@@ -45,10 +61,12 @@ const handleClickOutside = (e) => {
 onMounted(() => {
   loadAuthState()
   document.addEventListener('click', handleClickOutside)
+  window.addEventListener('scroll', handleScroll)
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
+  window.removeEventListener('scroll', handleScroll)
 })
 
 // Re-cek auth setiap kali route berubah (setelah login/logout)
@@ -82,7 +100,10 @@ const goToProfile = () => {
 </script>
 
 <template>
-  <div class="fixed top-0 left-0 z-50 w-full shadow-md">
+  <div
+  class="fixed top-0 left-0 z-50 w-full transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+  :class="showNavbar ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'"
+>
     <!-- Promotion Banner -->
     <div v-if="showBanner" role="region" aria-label="Promotion" class="bg-slate-800 px-4 py-2.5 relative flex items-center border-b border-slate-800 md:px-6">
       <p class="text-sm text-slate-50 font-medium pr-6 leading-relaxed flex-1 text-center sm:text-left">
@@ -95,88 +116,132 @@ const goToProfile = () => {
     </div>
     
     <!-- Main Navigation -->
-    <header class="flex h-16 w-full items-center bg-white tracking-wide sm:h-20">
-      <div class="container mx-auto flex w-full items-center justify-between px-4">
-      <RouterLink to="/" class="max-sm:hidden">
-        <img :src="logoImg" alt="logo" class="w-28 sm:w-32" />
+    <header
+  class="h-[88px] w-full border-b border-slate-200/60 bg-white/95 backdrop-blur-xl shadow-sm">
+      <div
+  class="container relative mx-auto flex items-start justify-between px-5 pt-2 lg:px-8"
+>
+      <RouterLink to="/" class="max-sm:hidden relative -top-1">
+        <img :src="logoImg" alt="logo" class="w-24 md:w-28 lg:w-32" />
       </RouterLink>
       <RouterLink to="/" class="hidden max-sm:block">
         <img :src="logoImg" alt="logo" class="w-8" />
       </RouterLink>
 
+<div class="absolute left-1/2 top-1/2 flex w-full max-w-[560px] -translate-x-1/2 -translate-y-1/2 flex-col items-start">
+  <!-- Search -->
+  <div class="w-full max-w-[540px]">
+
+    <form class="w-full" role="search">
+
       <div
-        class="max-lg:before:fixed max-lg:before:inset-0 max-lg:before:bg-black max-lg:before:opacity-50 max-lg:before:z-50"
-        :class="mobileMenuOpen ? 'block lg:flex' : 'hidden lg:flex'"
+        class="group flex h-[42px] w-full items-center rounded-full border border-slate-200 bg-white/95 px-2 shadow-[0_2px_10px_rgba(15,23,42,0.05)] transition-all duration-300 hover:shadow-[0_4px_14px_rgba(15,23,42,0.08)] focus-within:border-slate-300"
       >
-        <button
-          class="fixed right-4 top-2 z-100 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-gray-200 bg-white lg:hidden"
-          @click="mobileMenuOpen = false"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 fill-black" viewBox="0 0 320.591 320.591">
-            <path d="M30.391 318.583a30.37 30.37 0 0 1-21.56-7.288c-11.774-11.844-11.774-30.973 0-42.817L266.643 10.665c12.246-11.459 31.462-10.822 42.921 1.424 10.362 11.074 10.966 28.095 1.414 39.875L51.647 311.295a30.366 30.366 0 0 1-21.256 7.288z"></path>
-            <path d="M287.9 318.583a30.37 30.37 0 0 1-21.257-8.806L8.83 51.963C-2.078 39.225-.595 20.055 12.143 9.146c11.369-9.736 28.136-9.736 39.504 0l259.331 257.813c12.243 11.462 12.876 30.679 1.414 42.922-.456.487-.927.958-1.414 1.414a30.368 30.368 0 0 1-23.078 7.288z"></path>
+
+        <!-- Icon -->
+        <div class="pl-3 text-slate-400">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="size-[18px]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
           </svg>
+        </div>
+
+        <!-- Input -->
+        <input
+          type="search"
+          id="search"
+          placeholder="Search products..."
+          required
+          class="h-full w-full bg-transparent px-4 text-[14px] font-medium text-slate-700 outline-none placeholder:text-slate-400"
+        />
+
+        <!-- Button -->
+        <button
+          type="submit"
+          aria-label="Search"
+          class="flex h-8 items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-medium text-white transition-all duration-300 hover:bg-slate-700"
+        >
+          Search
         </button>
 
-        <ul class="z-50 gap-x-4 max-lg:fixed max-lg:left-0 max-lg:top-0 max-lg:h-full max-lg:w-1/2 max-lg:min-w-75 max-lg:space-y-3 max-lg:overflow-auto max-lg:bg-white max-lg:p-6 max-lg:shadow-md lg:flex">
-          <li class="mb-6 hidden max-lg:block">
-            <RouterLink to="/">
-              <img :src="logoImg" alt="logo" class="w-28" />
-            </RouterLink>
-          </li>
-          <li class="flex items-center px-3 max-lg:border-b max-lg:border-gray-300 max-lg:py-3">
-            <RouterLink to="/" class="block text-[15px] font-medium hover:text-blue-700"
-              :class="isHomeActive ? 'text-blue-700' : 'text-slate-900'">Home</RouterLink>
-          </li>
-          <li class="flex items-center px-3 max-lg:border-b max-lg:border-gray-300 max-lg:py-3">
-            <RouterLink
-              to="/products"
-              class="block text-[15px] font-medium hover:text-blue-700"
-              :class="isProductsActive ? 'text-blue-700' : 'text-slate-900'"
-            >
-              Products
-            </RouterLink>
-          </li>
-          
-          <!-- Search Form -->
-          <li class="px-3 max-lg:border-b max-lg:border-gray-300 max-lg:py-3 lg:ml-4">
-            <form class="w-full lg:w-64 mt-2 lg:mt-0" role="search">
-               <div
-                  class="flex items-center gap-2.5 px-3 py-2 relative rounded-full bg-white outline-1 -outline-offset-1 outline-slate-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-blue-600">
-                  <label for="search" class="sr-only">Search</label>
-                  <input type="search" id="search" placeholder="Search..." required
-                     class="text-sm text-slate-900 w-full outline-none pr-10" />
-
-                  <button type="submit" aria-label="Search"
-                     class="absolute right-0 h-full px-3 flex items-center justify-center bg-blue-600 rounded-r-full cursor-pointer">
-                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192.904 192.904" class="size-3.5 fill-white"
-                        aria-hidden="true">
-                        <path
-                           d="m190.707 180.101-47.078-47.077c11.702-14.072 18.752-32.142 18.752-51.831C162.381 36.423 125.959 0 81.191 0 36.422 0 0 36.423 0 81.193c0 44.767 36.422 81.187 81.191 81.187 19.688 0 37.759-7.049 51.831-18.751l47.079 47.078a7.474 7.474 0 0 0 5.303 2.197 7.498 7.498 0 0 0 5.303-12.803zM15 81.193C15 44.694 44.693 15 81.191 15c36.497 0 66.189 29.694 66.189 66.193 0 36.496-29.692 66.187-66.189 66.187C44.693 147.38 15 117.689 15 81.193z">
-                        </path>
-                     </svg>
-                  </button>
-               </div>
-            </form>
-          </li>
-        </ul>
       </div>
 
-      <div class="flex items-center space-x-3 max-lg:ml-auto">
+    </form>
 
-        <!-- Belum Login: tombol Login & Sign Up -->
+  </div>
+
+  <!-- Navigation Menu -->
+<ul class="mt-2 flex items-center gap-3">
+
+  <!-- Home -->
+  <li>
+    <RouterLink
+      to="/"
+      class="rounded-full px-4 py-1.5 text-[13px] font-medium text-slate-500 transition-all duration-200 hover:text-slate-900"
+      :class="
+        isHomeActive
+          ? 'text-slate-900'
+          : 'text-slate-500'
+      "
+    >
+      Home
+    </RouterLink>
+  </li>
+
+  <!-- Products -->
+  <li>
+    <RouterLink
+      to="/products"
+      class="rounded-full px-3.5 py-1.5 text-[13px] font-medium text-slate-500 transition-all duration-200 hover:text-slate-900"
+      :class="
+        isProductsActive
+          ? 'text-slate-900'
+          : 'text-slate-500'
+      "
+    >
+      Products
+    </RouterLink>
+  </li>
+
+</ul>
+
+</div>
+
+      <div class="ml-auto flex items-center gap-2 relative top-1">
+
         <template v-if="!isLoggedIn">
-          <RouterLink to="/login"
-            class="cursor-pointer rounded-full border border-gray-400 bg-transparent px-3 py-1.5 text-sm font-medium tracking-wide text-slate-900 transition-all hover:bg-gray-50"
-          >
-            Login
-          </RouterLink>
-          <RouterLink to="/register"
-            class="cursor-pointer rounded-full border border-blue-600 bg-blue-600 px-3 py-1.5 text-sm font-medium tracking-wide text-white transition-all hover:bg-blue-700"
-          >
-            Sign up
-          </RouterLink>
-        </template>
+
+  <!-- Auth Buttons -->
+<div class="ml-auto flex items-center gap-1.5 pr-1">
+
+  <!-- Login -->
+  <RouterLink
+    to="/login"
+    class="flex h-[36px] items-center justify-center rounded-full px-5 text-[13px] font-medium text-slate-600 transition-all duration-300 hover:bg-slate-100 hover:text-slate-900"
+  >
+    Login
+  </RouterLink>
+
+  <!-- Signup -->
+  <RouterLink
+    to="/register"
+    class="flex h-[36px] items-center justify-center rounded-full px-5 text-[13px] font-medium text-slate-600 transition-all duration-300 hover:bg-slate-100 hover:text-slate-900"
+  >
+    Sign up
+  </RouterLink>
+
+</div>
+</template>
 
         <!-- Sudah Login: Avatar + Dropdown -->
         <template v-else>
@@ -286,12 +351,7 @@ const goToProfile = () => {
           </div>
         </template>
 
-        <!-- Hamburger (mobile) -->
-        <button class="cursor-pointer lg:hidden" @click="mobileMenuOpen = true">
-          <svg class="h-6 w-6" fill="#000" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-            <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
-          </svg>
-        </button>
+        
       </div>
     </div>
   </header>
