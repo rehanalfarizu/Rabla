@@ -27,5 +27,14 @@ export default defineConfig(({ command, mode }) => {
       'import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID': JSON.stringify(firebaseConfig.messagingSenderId),
       'import.meta.env.VITE_FIREBASE_APP_ID': JSON.stringify(firebaseConfig.appId),
     },
+    build: {
+      outDir: 'dist',
+      assetsDir: 'assets',
+      rollupOptions: {
+        output: {
+          manualChunks: undefined,
+        },
+      },
+    },
   }
 })
