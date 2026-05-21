@@ -2,14 +2,13 @@
 
 namespace App\Models;
 
-use Filament\Models\Contracts\FilamentUser;
 use MongoDB\Laravel\Eloquent\Model;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Model implements AuthenticatableContract, FilamentUser
+class User extends Model implements AuthenticatableContract
 {
     use Authenticatable, Notifiable, HasApiTokens;
 
@@ -37,11 +36,6 @@ class User extends Model implements AuthenticatableContract, FilamentUser
         'last_login_at' => 'datetime',
         'email_verified_at' => 'datetime',
     ];
-
-    public function canAccessPanel(\Filament\Panel $panel): bool
-    {
-        return $this->is_admin === true;
-    }
 
     public function addresses()
     {
