@@ -5,11 +5,21 @@
 
     RewriteEngine On
 
-    # Serve static assets directly
-    RewriteCond %{REQUEST_URI} ^/build/assets/
+    # Serve static assets from build folder directly
+    RewriteCond %{REQUEST_URI} ^/build/
+    RewriteCond %{REQUEST_FILENAME} -f
     RewriteRule ^ - [L]
 
-    # Serve favicon directly
+    RewriteCond %{REQUEST_URI} ^/build/
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Serve assets folder
+    RewriteCond %{REQUEST_URI} ^/assets/
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    # Serve favicon
     RewriteCond %{REQUEST_URI} ^/favicon
     RewriteRule ^ - [L]
 
