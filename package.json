@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "build": "cp public/index.php /tmp/laravel_index.php && cp public/.htaccess /tmp/laravel_htaccess && cd frontend && npm run build && cp -r dist/assets ../public/assets && cp dist/index.html ../public/index.html && cp /tmp/laravel_index.php ../public/index.php && cp /tmp/laravel_htaccess ../public/.htaccess"
+    "build": "cp public/index.php /tmp/laravel_index.php && cp public/.htaccess /tmp/laravel_htaccess && cd frontend && npm install --include=dev && npm run build && cp -r dist/assets ../public/assets && cp dist/index.html ../public/index.html && cp /tmp/laravel_index.php ../public/index.php && cp /tmp/laravel_htaccess ../public/.htaccess"
   },
   "engines": {
     "node": ">=18.0.0",
