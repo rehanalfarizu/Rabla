@@ -1,6 +1,7 @@
 {
-  "name": "rabla",
+  "name": "rabla/app",
   "description": "E-commerce application - Laravel + Vue.js",
+  "type": "project",
   "require": {
     "php": "^8.2",
     "filament/filament": "^3.0",
