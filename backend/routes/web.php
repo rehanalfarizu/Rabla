@@ -1,17 +1,30 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\File;
 
-// Static files are served by Apache/nginx directly
+// Serve static assets directly - no Laravel routing for these
+// Just serve index.html for root
 Route::get('/', function () {
-    return response()->file(public_path('index.html'));
+    $indexPath = public_path('index.html');
+    if (File::exists($indexPath)) {
+        return response(File::get($indexPath), 200)
+            ->header('Content-Type', 'text/html');
+    }
+    abort(404);
 });
 
-Route::get('/debug-session', function() {
-    return response()->json([
-        'session_id' => session()->getId(),
-        'user' => auth()->check() ? auth()->user()->email : null,
-        'is_admin' => auth()->check() ? (auth()->user()->is_admin ?? false) : null,
-        'authenticated' => auth()->check(),
-    ]);
-});
+// SPA fallback - serve index.html for all non-API routes
+Route::get('/{any}', function ($any = null) {
+    // Skip API routes
+    if (str_starts_with('/' . $any, '/api/')) {
+        abort(404);
+    }
+
+    $indexPath = public_path('index.html');
+    if (File::exists($indexPath)) {
+        return response(File::get($indexPath), 200)
+            ->header('Content-Type', 'text/html');
+    }
+    abort(404);
+})->where('any', '.*');
