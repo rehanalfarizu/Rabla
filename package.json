@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "build": "cd frontend && npm install --include=dev && npm run build && rm -rf ../public/* && cp -r dist/* ../public/"
+    "build": "cd frontend && npm install --include=dev && npm run build && cp ../public/index.php dist/ && cp -r ../public/.htaccess dist/ && rm -rf ../public/* && cp -r dist/* ../public/ && cp dist/index.php ../public/index.php && cp dist/.htaccess ../public/.htaccess"
   },
   "engines": {
     "node": ">=18.0.0",
