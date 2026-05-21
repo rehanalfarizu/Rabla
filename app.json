@@ -1,0 +1,13 @@
+{
+  "buildpacks": [
+    {
+      "url": "heroku/php"
+    },
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "scripts": {
+    "postinstall": "cd frontend && npm install && npm run build && rm -rf ../public/* && cp -r dist/* ../public/"
+  }
+}
