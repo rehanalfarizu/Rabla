@@ -1,10 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
 
+// Static files are served by Apache/nginx directly
 Route::get('/', function () {
-    return view('welcome');
+    return response()->file(public_path('index.html'));
 });
 
 Route::get('/debug-session', function() {
