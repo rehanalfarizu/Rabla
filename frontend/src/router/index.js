@@ -18,6 +18,7 @@ import CompleteProfile from '../pages/CompleteProfile.vue'
 import UserProfile from '../pages/UserProfile.vue'
 import NotFound from '../pages/NotFound.vue'
 import OTPVerification from '../pages/OTPVerification.vue'
+import RegisterVerify from '../pages/RegisterVerify.vue'
 
 const routes = [
   {
@@ -74,6 +75,11 @@ const routes = [
     path: '/register',
     name: 'Register',
     component: Register
+  },
+  {
+    path: '/register-verify',
+    name: 'RegisterVerify',
+    component: RegisterVerify
   },
   {
     path: '/complete-profile',
@@ -137,13 +143,16 @@ const router = createRouter({
 // Navigation guard — cek apakah user sudah login sebelum akses halaman terproteksi
 router.beforeEach((to, from, next) => {
   const isLoggedIn = !!localStorage.getItem('auth_token')
+  const userData = JSON.parse(localStorage.getItem('user') || '{}')
+  const isAdmin = userData?.is_admin === true
 
   if (isLoggedIn && (to.name === 'Login' || to.name === 'Register')) {
-    // Cegah user yang sudah login untuk kembali ke halaman login atau register
     next({ name: 'Home' })
   } else if (to.meta.requiresAuth && !isLoggedIn) {
-    // Simpan halaman yang ingin dituju agar bisa redirect setelah login
     next({ name: 'Login', query: { redirect: to.fullPath } })
+  } else if (to.path.startsWith('/admin') && !isAdmin) {
+    // Admin routes require admin privileges
+    next({ name: 'Home' })
   } else {
     next()
   }

@@ -1,11 +1,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import api from '../api'
 
 const router = useRouter()
 
 // Ambil data user yang sudah tersimpan saat register
-const authUser = JSON.parse(localStorage.getItem('auth_user') || '{}')
+const authUser = JSON.parse(localStorage.getItem('user') || '{}')
 
 const fullName = ref(authUser.name || '')
 const phone = ref('')
@@ -15,6 +16,8 @@ const province = ref('')
 const postalCode = ref('')
 const gender = ref('')
 const birthDate = ref('')
+const password = ref('')
+const confirmPassword = ref('')
 
 const errorMsg = ref('')
 const isLoading = ref(false)
@@ -30,6 +33,18 @@ const handleSubmit = async (e) => {
   e.preventDefault()
   errorMsg.value = ''
 
+  // Validasi password jika diisi
+  if (password.value) {
+    if (password.value.length < 8) {
+      errorMsg.value = 'Password minimal 8 karakter.'
+      return
+    }
+    if (password.value !== confirmPassword.value) {
+      errorMsg.value = 'Password dan konfirmasi password tidak cocok.'
+      return
+    }
+  }
+
   if (!phone.value || !address.value || !city.value || !province.value || !postalCode.value) {
     errorMsg.value = 'Harap lengkapi semua field yang wajib diisi.'
     return
@@ -37,31 +52,37 @@ const handleSubmit = async (e) => {
 
   isLoading.value = true
   try {
-    // Gabungkan data profil dengan data user yang sudah ada
-    const updatedUser = {
-      ...authUser,
+    // Kirim ke backend
+    const payload = {
       name: fullName.value,
       phone: phone.value,
       address: address.value,
       city: city.value,
       province: province.value,
-      postalCode: postalCode.value,
+      postal_code: postalCode.value,
       gender: gender.value,
-      birthDate: birthDate.value,
-      profileCompleted: true,
+      birth_date: birthDate.value,
     }
 
-    // Simpan kembali ke localStorage dalam format JSON (sesi saat ini)
-    localStorage.setItem('auth_user', JSON.stringify(updatedUser))
+    // Jika ada password baru
+    if (password.value) {
+      payload.password = password.value
+    }
 
-    // Simpan permanen ke database lokal berdasarkan email agar tidak hilang saat logout
-    const allProfiles = JSON.parse(localStorage.getItem('user_profiles') || '{}')
-    allProfiles[updatedUser.email] = updatedUser
-    localStorage.setItem('user_profiles', JSON.stringify(allProfiles))
+    const response = await api.put('/api/auth/profile', payload)
+
+    // Update localStorage
+    const updatedUser = {
+      ...authUser,
+      name: fullName.value,
+      phone: phone.value,
+      profileCompleted: true,
+    }
+    localStorage.setItem('user', JSON.stringify(updatedUser))
 
     router.push('/')
   } catch (err) {
-    errorMsg.value = 'Gagal menyimpan profil. Silakan coba lagi.'
+    errorMsg.value = err.response?.data?.message || 'Gagal menyimpan profil. Silakan coba lagi.'
     console.error(err)
   } finally {
     isLoading.value = false
@@ -149,6 +170,38 @@ const handleSkip = () => {
               v-model="birthDate"
               id="birthDate"
               type="date"
+              class="w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+
+          <!-- Divider -->
+          <div class="relative">
+            <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200"></div></div>
+            <div class="relative flex justify-center">
+              <span class="bg-white px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Password (Opsional)</span>
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div>
+            <label for="password" class="mb-1.5 block text-sm font-medium text-slate-700">Password Baru</label>
+            <input
+              v-model="password"
+              id="password"
+              type="password"
+              placeholder="Minimal 8 karakter (kosongkan jika tidak diubah)"
+              class="w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+
+          <!-- Konfirmasi Password -->
+          <div>
+            <label for="confirmPassword" class="mb-1.5 block text-sm font-medium text-slate-700">Konfirmasi Password</label>
+            <input
+              v-model="confirmPassword"
+              id="confirmPassword"
+              type="password"
+              placeholder="Masukkan ulang password"
               class="w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
             />
           </div>

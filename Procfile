@@ -1,0 +1,1 @@
+web: bash bin/heroku-post-build && php -S 0.0.0.0:$PORT -t public

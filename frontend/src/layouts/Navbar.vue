@@ -2,9 +2,12 @@
 import logoImg from '../assets/Logo.webp'
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import api from '../api'
+import { useCart } from '../composables/useCart'
 
 const router = useRouter()
 const route = useRoute()
+const { itemCount } = useCart()
 
 const mobileMenuOpen = ref(false)
 const dropdownOpen = ref(false)
@@ -24,7 +27,7 @@ const authUser = ref({})
 
 const loadAuthState = () => {
   const token = localStorage.getItem('auth_token')
-  const user = localStorage.getItem('auth_user')
+  const user = localStorage.getItem('user')
   isLoggedIn.value = !!token
   authUser.value = user ? JSON.parse(user) : {}
 }
@@ -80,13 +83,21 @@ const confirmLogout = () => {
 }
 
 // Eksekusi logout sebenarnya (dipanggil dari modal)
-const handleLogout = () => {
-  localStorage.removeItem('auth_token')
-  localStorage.removeItem('auth_user')
-  isLoggedIn.value = false
-  authUser.value = {}
-  showLogoutModal.value = false
-  router.push('/')
+const handleLogout = async () => {
+  try {
+    await api.post('/api/auth/logout')
+  } catch (err) {
+    // Ignore logout API error - just clear local data
+    console.warn('Logout API error:', err)
+  } finally {
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('user')
+    localStorage.removeItem('firebase_uid')
+    isLoggedIn.value = false
+    authUser.value = {}
+    showLogoutModal.value = false
+    router.push('/')
+  }
 }
 
 const goToProfile = () => {
@@ -129,92 +140,42 @@ const goToProfile = () => {
       </RouterLink>
 
 <div class="absolute left-1/2 top-1/2 flex w-full max-w-[560px] -translate-x-1/2 -translate-y-1/2 flex-col items-start">
-  <!-- Search -->
-  <div class="w-full max-w-[540px]">
-
+  <!-- Search bar (hidden on products page since Products.vue has its own search) -->
+  <div v-if="!isProductsActive" class="w-full">
     <form class="w-full" role="search">
-
       <div
         class="group flex h-[42px] w-full items-center rounded-full border border-slate-200 bg-white/95 px-2 shadow-[0_2px_10px_rgba(15,23,42,0.05)] transition-all duration-300 hover:shadow-[0_4px_14px_rgba(15,23,42,0.08)] focus-within:border-slate-300"
       >
-
-        <!-- Icon -->
         <div class="pl-3 text-slate-400">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="size-[18px]"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
+          <svg xmlns="http://www.w3.org/2000/svg" class="size-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
         </div>
-
-        <!-- Input -->
-        <input
-          type="search"
-          id="search"
-          placeholder="Search products..."
-          required
-          class="h-full w-full bg-transparent px-4 text-[14px] font-medium text-slate-700 outline-none placeholder:text-slate-400"
-        />
-
-        <!-- Button -->
-        <button
-          type="submit"
-          aria-label="Search"
-          class="flex h-8 items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-medium text-white transition-all duration-300 hover:bg-slate-700"
-        >
+        <input type="search" id="search" placeholder="Search products..." required
+          class="h-full w-full bg-transparent px-4 text-[14px] font-medium text-slate-700 outline-none placeholder:text-slate-400"/>
+        <button type="submit" aria-label="Search"
+          class="flex h-8 items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-medium text-white transition-all duration-300 hover:bg-slate-700">
           Search
         </button>
-
       </div>
-
     </form>
-
   </div>
 
   <!-- Navigation Menu -->
-<ul class="mt-2 flex items-center gap-3">
-
-  <!-- Home -->
-  <li>
-    <RouterLink
-      to="/"
-      class="rounded-full px-4 py-1.5 text-[13px] font-medium text-slate-500 transition-all duration-200 hover:text-slate-900"
-      :class="
-        isHomeActive
-          ? 'text-slate-900'
-          : 'text-slate-500'
-      "
-    >
-      Home
-    </RouterLink>
-  </li>
-
-  <!-- Products -->
-  <li>
-    <RouterLink
-      to="/products"
-      class="rounded-full px-3.5 py-1.5 text-[13px] font-medium text-slate-500 transition-all duration-200 hover:text-slate-900"
-      :class="
-        isProductsActive
-          ? 'text-slate-900'
-          : 'text-slate-500'
-      "
-    >
-      Products
-    </RouterLink>
-  </li>
-
-</ul>
-
+  <ul class="mt-2 flex items-center gap-3">
+    <li>
+      <RouterLink to="/" class="rounded-full px-4 py-1.5 text-[13px] font-medium text-slate-500 transition-all duration-200 hover:text-slate-900"
+        :class="isHomeActive ? 'text-slate-900' : 'text-slate-500'">
+        Home
+      </RouterLink>
+    </li>
+    <li>
+      <RouterLink to="/products" class="rounded-full px-3.5 py-1.5 text-[13px] font-medium text-slate-500 transition-all duration-200 hover:text-slate-900"
+        :class="isProductsActive ? 'text-slate-900' : 'text-slate-500'">
+        Products
+      </RouterLink>
+    </li>
+  </ul>
 </div>
 
       <div class="ml-auto flex items-center gap-2 relative top-1">

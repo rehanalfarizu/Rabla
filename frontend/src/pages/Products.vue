@@ -1,5 +1,6 @@
 <script setup>
-import { ref, watch, onBeforeUnmount, computed } from 'vue'
+import { ref, watch, onBeforeUnmount, computed, onMounted } from 'vue'
+import api from '../api'
 import ProductDetail from './ProductDetail.vue'
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
@@ -9,19 +10,85 @@ const closeProductModal = () => { selectedProductId.value = null }
 watch(selectedProductId, (v) => { document.body.style.overflow = v ? 'hidden' : '' })
 onBeforeUnmount(() => { document.body.style.overflow = '' })
 
-// ─── Mock product data (ganti dengan API call nanti) ─────────────────────────
-const products = [
-  { id: 1,  name: 'New Balance 530',    brand: 'New Balance', category: 'Sneakers',    price: 1490000, oldPrice: 1990000, rating: 4.5, stock: true,  colors: ['blue','gray'],       sizes: ['40','41','42','43'], image: 'https://via.placeholder.com/300x300?text=NB+530' }, 
-  { id: 2,  name: 'Puffer Jacket',       brand: 'Uniqlo',      category: 'Jacket',      price: 899000,  oldPrice: 1200000, rating: 4.0, stock: true,  colors: ['black','orange'],    sizes: ['S','M','L','XL'], image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' },
-  { id: 3,  name: 'Floral Dress',        brand: 'Zara',        category: 'Dress',       price: 750000,  oldPrice: 950000,  rating: 3.5, stock: false, colors: ['pink','white'],      sizes: ['XS','S','M'], image: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' },
-  { id: 4,  name: 'Classic Watch',       brand: 'Adidas',      category: 'Watch',       price: 2500000, oldPrice: 3000000, rating: 5.0, stock: true,  colors: ['black'],             sizes: [], image: 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' },
-  { id: 5,  name: 'Aviator Sunglasses',  brand: 'Zara',        category: 'Sunglasses',  price: 450000,  oldPrice: 600000,  rating: 4.2, stock: true,  colors: ['black','yellow'],    sizes: [], image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' },
-  { id: 6,  name: 'Canvas Backpack',     brand: 'Nike',        category: 'Backpack',    price: 690000,  oldPrice: 890000,  rating: 3.8, stock: false, colors: ['gray','blue'],       sizes: [], image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' },
-  { id: 7,  name: 'Slim Chinos',         brand: "Levi's",      category: 'Pants',       price: 580000,  oldPrice: 750000,  rating: 4.1, stock: true,  colors: ['black','orange'],    sizes: ['S','M','L','XL','XXL'], image: 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' },
-  { id: 8,  name: 'Polo Shirt',          brand: 'H&M',         category: 'Tops',        price: 320000,  oldPrice: 420000,  rating: 3.0, stock: true,  colors: ['white','blue','red'], sizes: ['S','M','L'], image: 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' },
-]
+// ─── Product Data from API ─────────────────────────────────────────────────────
+const products = ref([])
+const loading = ref(true)
+const error = ref(null)
 
-// ─── Filter State ─────────────────────────────────────────────────────────────
+const fetchProducts = async () => {
+  loading.value = true
+  error.value = null
+  try {
+    console.log('Fetching products from API...')
+    const params = {}
+    if (searchQuery.value) params.search = searchQuery.value
+    if (selectedCategory.value !== 'all') params.category_id = selectedCategory.value
+    params.sort_by = sortBy.value === 'price-low' ? 'price' : sortBy.value === 'price-high' ? 'price' : sortBy.value === 'rating-high' ? 'rating' : 'created_at'
+    params.sort_dir = sortBy.value === 'price-low' || sortBy.value === 'rating-high' ? 'asc' : 'desc'
+
+    console.log('API URL:', api.defaults.baseURL)
+    console.log('Params:', params)
+
+    const response = await api.get('/api/products', { params })
+    console.log('Response:', response)
+    console.log('Response data:', response.data)
+
+    // Handle paginated response and normalize data
+    const responseData = response.data
+    const rawProducts = responseData.data || responseData.products || responseData || []
+
+    console.log('Raw products count:', rawProducts.length)
+    console.log('First raw product:', rawProducts[0])
+
+    // Normalize products to have consistent structure
+    products.value = rawProducts.map(p => {
+      // Extract category name safely
+      let categoryName = 'Uncategorized'
+      if (p.category && typeof p.category === 'object' && p.category.name) {
+        categoryName = p.category.name
+      } else if (p.category_id && typeof p.category_id === 'string') {
+        // Only use category_id as fallback if it looks like a valid name (not an ObjectID)
+        if (!p.category_id.match(/^[0-9a-f]{24}$/i)) {
+          categoryName = p.category_id
+        }
+      }
+
+      return {
+        id: p.id || p._id,
+        name: p.name || '',
+        brand: p.brand || '',
+        price: parseFloat(p.price) || 0,
+        originalPrice: p.compare_price ? parseFloat(p.compare_price) : null,
+        discount: p.compare_price && p.price ? Math.round(((parseFloat(p.compare_price) - parseFloat(p.price)) / parseFloat(p.compare_price)) * 100) : 0,
+        rating: parseFloat(p.rating) || 0,
+        reviews: p.reviews || 0,
+        stock: p.stock || 0,
+        image: (p.images && p.images[0]) || p.image || '',
+        images: p.images || [],
+        colors: p.colors || [],
+        sizes: p.sizes || [],
+        category: categoryName,
+        badge: p.is_featured ? 'Best Seller' : (p.is_new ? 'New Arrival' : null),
+        badgeClass: p.is_featured ? 'bg-amber-100 text-amber-700' : (p.is_new ? 'bg-emerald-100 text-emerald-700' : ''),
+      }
+    })
+
+    console.log('Normalized products:', products.value)
+    console.log('Products count:', products.value.length)
+  } catch (err) {
+    error.value = err.message || 'Failed to fetch products'
+    console.error('Error fetching products:', err)
+    console.error('Error response:', err.response?.data)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchProducts()
+})
+
+// ─── Filter State (must be declared BEFORE watch) ───────────────────────────
 const searchQuery     = ref('')
 const selectedCategory = ref('all')
 const priceMin        = ref(0)
@@ -34,8 +101,17 @@ const selectedSizes   = ref([])          // array ukuran yang dipilih
 const sortBy          = ref('default')
 const brandSearch     = ref('')
 
+// ─── Watch for filter changes ──────────────────────────────────────────────────
+// Only re-fetch on search/sort changes. Category filtering is done client-side.
+watch([searchQuery, sortBy], () => {
+  fetchProducts()
+})
+
 // ─── Static option lists ──────────────────────────────────────────────────────
-const allBrands  = [...new Set(products.map(p => p.brand))].sort()
+const allBrands  = computed(() => {
+  const brands = products.value.map(p => p.brand).filter(Boolean)
+  return [...new Set(brands)].sort()
+})
 const allColors  = [
   { value: 'red',    label: 'Merah',  hex: '#dc2626' },
   { value: 'blue',   label: 'Biru',   hex: '#1d4ed8' },
@@ -48,26 +124,35 @@ const allColors  = [
   { value: 'purple', label: 'Ungu',   hex: '#7c3aed' },
 ]
 const allSizes   = ['XS','S','M','L','XL','XXL','XXXL','38','39','40','41','42','43']
-const allCategories = computed(() => ['all', ...new Set(products.map(p => p.category))])
+const allCategories = computed(() => {
+  const cats = products.value.map(p => p.category).filter(Boolean)
+  return ['all', ...new Set(cats)]
+})
 const filteredBrands = computed(() =>
-  allBrands.filter(b => b.toLowerCase().includes(brandSearch.value.toLowerCase()))
+  allBrands.value.filter(b => b.toLowerCase().includes(brandSearch.value.toLowerCase()))
 )
 
 // ─── Filtered Products ────────────────────────────────────────────────────────
 const filteredProducts = computed(() => {
   const kw = searchQuery.value.trim().toLowerCase()
 
-  let result = products.filter(p => {
+  console.log('Filtering with category:', selectedCategory.value)
+  console.log('Available products:', products.value.map(p => p.category))
+
+  let result = products.value.filter(p => {
     const matchCat    = selectedCategory.value === 'all' || p.category === selectedCategory.value
     const matchKw     = !kw || p.name.toLowerCase().includes(kw) || p.brand.toLowerCase().includes(kw)
     const matchPrice  = p.price >= priceMin.value && p.price <= priceMax.value
     const matchRating = p.rating >= minRating.value
     const matchStock  = !stockOnly.value || p.stock
     const matchBrand  = selectedBrands.value.length === 0 || selectedBrands.value.includes(p.brand)
-    const matchColor  = selectedColors.value.length === 0 || p.colors.some(c => selectedColors.value.includes(c))
-    const matchSize   = selectedSizes.value.length === 0 || p.sizes.some(s => selectedSizes.value.includes(s))
+    const matchColor  = selectedColors.value.length === 0 || (p.colors && p.colors.some(c => selectedColors.value.includes(c)))
+    const matchSize   = selectedSizes.value.length === 0 || (p.sizes && p.sizes.some(s => selectedSizes.value.includes(s)))
+    console.log(`Product ${p.name}: category=${p.category}, matchCat=${matchCat}`)
     return matchCat && matchKw && matchPrice && matchRating && matchStock && matchBrand && matchColor && matchSize
   })
+
+  console.log('Filtered result count:', result.length)
 
   if (sortBy.value === 'price-low')    result = [...result].sort((a, b) => a.price - b.price)
   if (sortBy.value === 'price-high')   result = [...result].sort((a, b) => b.price - a.price)
@@ -116,9 +201,9 @@ const sidebarOpen = ref(false)
 </script>
 
 <template>
-  <div class="bg-gray-50 min-h-screen">
-    <section class="py-22">
-      <div class="w-full px-4 py-10">
+  <div class="bg-gray-50 min-h-screen pt-[128px]">
+    <section class="pb-10">
+      <div class="w-full px-4 pt-2">
 
         <!-- Topbar: search + sort + mobile filter toggle -->
         <div class="flex flex-wrap items-center gap-3 mb-6 max-w-screen-xl mx-auto">
@@ -310,14 +395,31 @@ const sidebarOpen = ref(false)
                 <span class="text-sm text-gray-400">{{ filteredProducts.length }} produk</span>
               </div>
 
-              <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              <!-- Loading state -->
+              <div v-if="loading" class="flex items-center justify-center py-20">
+                <div class="flex flex-col items-center gap-4">
+                  <div class="w-12 h-12 border-4 border-orange-400 border-t-transparent rounded-full animate-spin"></div>
+                  <p class="text-gray-500">Memuat produk...</p>
+                </div>
+              </div>
+
+              <!-- Error state -->
+              <div v-else-if="error" class="text-center py-20">
+                <p class="text-red-500 font-medium">{{ error }}</p>
+                <button @click="fetchProducts" class="mt-4 px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-700 transition-colors">
+                  Coba Lagi
+                </button>
+              </div>
+
+              <!-- Products grid -->
+              <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 <div
                   v-for="product in filteredProducts" :key="product.id"
                   class="group overflow-hidden relative cursor-pointer"
                   @click="openProductModal(product.id)"
                 >
                   <div class="aspect-3/4 bg-slate-100 w-full overflow-hidden">
-                    <img :src="product.image" :alt="product.name"
+                    <img :src="product.image || (product.images && product.images[0]) || 'https://via.placeholder.com/300x400?text=No+Image'" :alt="product.name"
                       class="w-full h-full object-cover object-top hover:scale-110 transition-all duration-700" />
                     <!-- Stock badge -->
                     <span v-if="!product.stock"
@@ -351,8 +453,8 @@ const sidebarOpen = ref(false)
               </div>
             </div>
 
-            <!-- Empty state -->
-            <div v-if="filteredProducts.length === 0"
+            <!-- Empty state (only show when we have data but filtered results are empty) -->
+            <div v-if="!loading && products.length > 0 && filteredProducts.length === 0"
               class="max-w-7xl mx-auto text-center bg-white border border-gray-200 rounded-xl p-10 mt-6">
               <p class="text-lg font-semibold text-gray-700">Produk tidak ditemukan</p>
               <p class="text-sm text-gray-500 mt-1">Coba ubah filter atau kata kunci pencarian.</p>

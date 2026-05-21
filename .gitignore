@@ -1,0 +1,13 @@
+# Claude Code
+CLAUDE.md
+/Users/macbookpro/.claude/projects/-Users-macbookpro-Documents-Rabla/
+
+# Environment files
+backend/.env
+backend/.env.local
+backend/.env.*.local
+
+# Frontend
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local

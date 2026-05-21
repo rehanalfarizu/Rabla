@@ -1,0 +1,14 @@
+{
+  "name": "rabla",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "npm run build:frontend",
+    "build:frontend": "cd frontend && npm install && npm run build",
+    "heroku-postbuild": "npm run build"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

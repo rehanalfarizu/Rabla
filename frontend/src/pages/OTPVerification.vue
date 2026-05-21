@@ -1,9 +1,11 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
+import api from '../api'
 import ToastAlert from '../components/ToastAlert.vue'
 
 const router = useRouter()
+const route = useRoute()
 const toastAlert = ref(null)
 
 // Konfigurasi
@@ -11,12 +13,22 @@ const OTP_LENGTH = 6
 const otpValues = ref(Array(OTP_LENGTH).fill(''))
 const inputRefs = ref([])
 
-// State simulasi
-const sentTo = ref('user@example.com')
+// State
+const sentTo = ref('')
 const timer = ref(60)
 const isResending = ref(false)
 const isVerifying = ref(false)
 const errorMessage = ref('')
+
+// Get email from route or storage
+onMounted(() => {
+  const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
+  sentTo.value = route.query.email || storedUser.email || 'user@example.com'
+  startTimer()
+  setTimeout(() => {
+    if (inputRefs.value[0]) inputRefs.value[0].focus()
+  }, 100)
+})
 
 // Focus management
 const setInputRef = (el, index) => {
@@ -37,14 +49,6 @@ const startTimer = () => {
   }, 1000)
 }
 
-onMounted(() => {
-  startTimer()
-  // Focus input pertama
-  setTimeout(() => {
-    if (inputRefs.value[0]) inputRefs.value[0].focus()
-  }, 100)
-})
-
 onUnmounted(() => {
   clearInterval(timerInterval)
 })
@@ -59,7 +63,7 @@ const formatTime = computed(() => {
 const handleInput = (e, index) => {
   errorMessage.value = ''
   const val = e.target.value
-  
+
   // Pastikan hanya angka
   if (!/^\d*$/.test(val)) {
     otpValues.value[index] = ''
@@ -101,7 +105,7 @@ const handlePaste = (e) => {
   errorMessage.value = ''
   // Ambil hanya angka dari teks yang dipaste
   const pastedData = e.clipboardData.getData('text/plain').replace(/\D/g, '').slice(0, OTP_LENGTH)
-  
+
   if (pastedData) {
     for (let i = 0; i < pastedData.length; i++) {
       otpValues.value[i] = pastedData[i]
@@ -114,21 +118,22 @@ const handlePaste = (e) => {
 
 const resendCode = async () => {
   if (timer.value > 0) return
-  
+
   isResending.value = true
   errorMessage.value = ''
-  
+
   try {
-    // Simulasi API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    const response = await api.post('/api/auth/resend-otp', {
+      email: sentTo.value
+    })
     startTimer()
     // Reset input
     otpValues.value = Array(OTP_LENGTH).fill('')
     if (inputRefs.value[0]) inputRefs.value[0].focus()
-    toastAlert.value.show('success', 'Kode OTP baru telah dikirim!')
+    toastAlert.value.show('success', response.data.message || 'Kode OTP baru telah dikirim!')
   } catch (error) {
-    errorMessage.value = 'Gagal mengirim ulang kode.'
-    toastAlert.value.show('error', 'Gagal mengirim ulang kode.')
+    errorMessage.value = error.response?.data?.message || 'Gagal mengirim ulang kode.'
+    toastAlert.value.show('error', errorMessage.value)
   } finally {
     isResending.value = false
   }
@@ -136,31 +141,31 @@ const resendCode = async () => {
 
 const verifyCode = async () => {
   const code = otpValues.value.join('')
-  
+
   if (code.length < OTP_LENGTH) {
     errorMessage.value = `Masukkan kode OTP ${OTP_LENGTH} digit.`
     return
   }
-  
+
   isVerifying.value = true
   errorMessage.value = ''
-  
+
   try {
-    // Simulasi API call verifikasi
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    // Anggap '123456' adalah kode yang benar untuk testing
-    if (code === '123456') { 
-      // Sukses
-      toastAlert.value.show('success', 'Verifikasi berhasil!')
-      setTimeout(() => router.push('/complete-profile'), 1500)
-    } else {
-      errorMessage.value = 'Kode OTP salah atau sudah kadaluarsa.'
-      toastAlert.value.show('error', 'Kode OTP salah!')
-    }
+    const response = await api.post('/api/auth/verify-otp', {
+      email: sentTo.value,
+      otp: code
+    })
+
+    toastAlert.value.show('success', response.data.message || 'Verifikasi berhasil!')
+    setTimeout(() => router.push('/complete-profile'), 1500)
   } catch (error) {
-    errorMessage.value = 'Terjadi kesalahan saat verifikasi.'
-    toastAlert.value.show('error', 'Terjadi kesalahan sistem.')
+    const errorData = error.response?.data?.errors
+    if (errorData?.otp) {
+      errorMessage.value = errorData.otp[0]
+    } else {
+      errorMessage.value = error.response?.data?.message || 'Kode OTP salah atau sudah kadaluarsa.'
+    }
+    toastAlert.value.show('error', errorMessage.value)
   } finally {
     isVerifying.value = false
   }

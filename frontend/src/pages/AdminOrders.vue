@@ -1,6 +1,18 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import AdminSidebar from '../layouts/AdminSidebar.vue'
+import { useAdminOrders } from '../composables/useAdminOrders'
+
+const {
+  orders,
+  loading,
+  stats,
+  pagination,
+  fetchOrdersData,
+  fetchStats,
+  updateStatus,
+  setPage
+} = useAdminOrders()
 
 const sidebarOpen = ref(true)
 const toggleSidebar = () => {
@@ -17,26 +29,10 @@ const formatCurrency = (value) => {
 }
 
 const formatDate = (dateString) => {
+  if (!dateString) return '-'
   const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }
   return new Date(dateString).toLocaleDateString('id-ID', options)
 }
-
-// Dummy Product Data
-const orders = ref([
-  { id: 'ORD-9843', customerName: 'Budi Santoso', total: 2500000, paymentStatus: 'Paid', orderStatus: 'Completed', date: '2024-03-10T14:30:00' },
-  { id: 'ORD-9844', customerName: 'Siti Aminah', total: 450000, paymentStatus: 'Pending', orderStatus: 'Processing', date: '2024-03-12T09:15:00' },
-  { id: 'ORD-9845', customerName: 'Ahmad Faisal', total: 1100000, paymentStatus: 'Paid', orderStatus: 'Shipped', date: '2024-03-13T16:45:00' },
-  { id: 'ORD-9846', customerName: 'Dewi Lestari', total: 5400000, paymentStatus: 'Failed', orderStatus: 'Cancelled', date: '2024-03-14T10:05:00' },
-  { id: 'ORD-9847', customerName: 'Rizky Pratama', total: 850000, paymentStatus: 'Paid', orderStatus: 'Processing', date: '2024-03-15T08:20:00' },
-  { id: 'ORD-9848', customerName: 'Maya Indah', total: 150000, paymentStatus: 'Paid', orderStatus: 'Completed', date: '2024-03-15T11:40:00' },
-  { id: 'ORD-9849', customerName: 'Hendra Wijaya', total: 1200000, paymentStatus: 'Pending', orderStatus: 'Processing', date: '2024-03-16T13:10:00' },
-  { id: 'ORD-9850', customerName: 'Rina Marlina', total: 1950000, paymentStatus: 'Paid', orderStatus: 'Shipped', date: '2024-03-17T15:25:00' },
-  { id: 'ORD-9851', customerName: 'Dimas Setiawan', total: 300000, paymentStatus: 'Paid', orderStatus: 'Completed', date: '2024-03-18T09:00:00' },
-  { id: 'ORD-9852', customerName: 'Putri Ayu', total: 9800000, paymentStatus: 'Paid', orderStatus: 'Shipped', date: '2024-03-18T14:50:00' },
-  { id: 'ORD-9853', customerName: 'Andi Saputra', total: 120000, paymentStatus: 'Failed', orderStatus: 'Cancelled', date: '2024-03-19T10:30:00' },
-  { id: 'ORD-9854', customerName: 'Lia Kusuma', total: 750000, paymentStatus: 'Pending', orderStatus: 'Processing', date: '2024-03-20T12:00:00' },
-  { id: 'ORD-9855', customerName: 'Kevin Wijaya', total: 3200000, paymentStatus: 'Paid', orderStatus: 'Processing', date: '2024-03-21T18:15:00' }
-])
 
 // Filter & Search State
 const activeTab = ref('All')
@@ -45,51 +41,73 @@ const tabs = ['All', 'Processing', 'Shipped', 'Completed', 'Cancelled']
 const searchQuery = ref('')
 const selectedPayment = ref('All Payment Status')
 
-// Metrics Calculations
-const totalOrdersCount = computed(() => orders.value.length)
-const pendingOrdersCount = computed(() => orders.value.filter(o => o.orderStatus === 'Processing' || o.paymentStatus === 'Pending').length)
-const completedOrdersCount = computed(() => orders.value.filter(o => o.orderStatus === 'Completed').length)
-const totalRevenue = computed(() => {
-  return orders.value
-    .filter(o => o.orderStatus === 'Completed' || o.paymentStatus === 'Paid')
-    .reduce((sum, order) => sum + order.total, 0)
+// Map API status to display status
+const mapStatus = (status) => {
+  const statusMap = {
+    'pending': 'Processing',
+    'confirmed': 'Processing',
+    'processing': 'Processing',
+    'shipped': 'Shipped',
+    'delivered': 'Completed',
+    'cancelled': 'Cancelled',
+    'returned': 'Cancelled'
+  }
+  return statusMap[status?.toLowerCase()] || status || 'Processing'
+}
+
+const mapPaymentStatus = (status) => {
+  const statusMap = {
+    'pending': 'Pending',
+    'paid': 'Paid',
+    'failed': 'Failed',
+    'refunded': 'Failed'
+  }
+  return statusMap[status?.toLowerCase()] || status || 'Pending'
+}
+
+// Load data
+onMounted(async () => {
+  await Promise.all([fetchOrdersData(), fetchStats()])
 })
 
-// Pagination State
-const currentPage = ref(1)
-const itemsPerPage = 8
-
-// Computed Filtered Data
-const filteredOrders = computed(() => {
-  return orders.value.filter(order => {
-    // Search filter
-    const searchLower = searchQuery.value.toLowerCase()
-    const matchSearch = order.id.toLowerCase().includes(searchLower) || order.customerName.toLowerCase().includes(searchLower)
-    
-    // Tab Status filter
-    const matchTab = activeTab.value === 'All' || order.orderStatus === activeTab.value
-
-    // Payment Status filter
-    const matchPayment = selectedPayment.value === 'All Payment Status' || order.paymentStatus === selectedPayment.value
-    
-    return matchSearch && matchTab && matchPayment
+// Watch for search/filter changes
+watch([searchQuery, activeTab, selectedPayment], () => {
+  setPage(1)
+  fetchOrdersData({
+    search: searchQuery.value,
+    status: activeTab.value !== 'All' ? activeTab.value : undefined,
+    payment_status: selectedPayment.value !== 'All Payment Status' ? selectedPayment.value : undefined
   })
 })
 
-const totalPages = computed(() => Math.ceil(filteredOrders.value.length / itemsPerPage))
+// Metrics from API
+const totalOrdersCount = computed(() => stats.value.total || 0)
+const pendingOrdersCount = computed(() => stats.value.pending + stats.value.processing || 0)
+const completedOrdersCount = computed(() => stats.value.completed || 0)
+const totalRevenue = computed(() => stats.value.total_revenue || 0)
 
-const paginatedOrders = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  const end = start + itemsPerPage
-  return filteredOrders.value.slice(start, end)
-})
+const totalPages = computed(() => pagination.value.last_page)
 
 const prevPage = () => {
-  if (currentPage.value > 1) currentPage.value--
+  if (pagination.value.current_page > 1) {
+    setPage(pagination.value.current_page - 1)
+    fetchOrdersData({
+      search: searchQuery.value,
+      status: activeTab.value !== 'All' ? activeTab.value : undefined,
+      payment_status: selectedPayment.value !== 'All Payment Status' ? selectedPayment.value : undefined
+    })
+  }
 }
 
 const nextPage = () => {
-  if (currentPage.value < totalPages.value) currentPage.value++
+  if (pagination.value.current_page < totalPages.value) {
+    setPage(pagination.value.current_page + 1)
+    fetchOrdersData({
+      search: searchQuery.value,
+      status: activeTab.value !== 'All' ? activeTab.value : undefined,
+      payment_status: selectedPayment.value !== 'All Payment Status' ? selectedPayment.value : undefined
+    })
+  }
 }
 
 // Badge coloring helpers
@@ -112,8 +130,20 @@ const getOrderBadgeClass = (status) => {
   }
 }
 
-const updateOrderStatus = (order, newStatus) => {
-  order.orderStatus = newStatus
+const updateOrderStatusHandler = async (order, newStatus) => {
+  try {
+    const apiStatus = newStatus.toLowerCase()
+    await updateStatus(order.id, { status: apiStatus })
+    order.status = newStatus
+  } catch (e) {
+    alert('Failed to update order status')
+    // Revert on failure
+    fetchOrdersData()
+  }
+}
+
+const getCustomerName = (order) => {
+  return order.customer?.name || order.customer_name || order.user?.name || 'Unknown'
 }
 </script>
 
@@ -123,7 +153,7 @@ const updateOrderStatus = (order, newStatus) => {
 
     <main class="flex-1 transition-all duration-300 transform" :style="{ marginLeft: sidebarOpen ? '250px' : '80px' }">
       <div class="p-6 lg:p-8">
-        
+
         <!-- Header -->
         <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -160,9 +190,10 @@ const updateOrderStatus = (order, newStatus) => {
 
         <!-- Main Content Area -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          
+
           <!-- Filters & Search Header -->
           <div class="border-b border-gray-100">
+
             <!-- Tabs -->
             <div class="px-6 pt-4">
               <nav class="flex space-x-4 border-b border-gray-100 overflow-x-auto pb-px" aria-label="Tabs">
@@ -190,11 +221,11 @@ const updateOrderStatus = (order, newStatus) => {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </div>
-                <input 
-                  v-model="searchQuery" 
-                  type="text" 
-                  class="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg leading-5 bg-white placeholder-gray-400 focus:outline-none focus:border-gray-300 focus:ring-1 focus:ring-gray-300 sm:text-sm transition-colors" 
-                  placeholder="Search order ID or customer" 
+                <input
+                  v-model="searchQuery"
+                  type="text"
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg leading-5 bg-white placeholder-gray-400 focus:outline-none focus:border-gray-300 focus:ring-1 focus:ring-gray-300 sm:text-sm transition-colors"
+                  placeholder="Search order ID or customer"
                 />
               </div>
 
@@ -209,8 +240,17 @@ const updateOrderStatus = (order, newStatus) => {
             </div>
           </div>
 
+          <!-- Loading State -->
+          <div v-if="loading" class="p-8 text-center text-gray-500">
+            <svg class="animate-spin h-8 w-8 mx-auto text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="mt-2">Loading orders...</p>
+          </div>
+
           <!-- Table -->
-          <div class="overflow-x-auto">
+          <div v-else class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
@@ -224,34 +264,35 @@ const updateOrderStatus = (order, newStatus) => {
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="order in paginatedOrders" :key="order.id" class="hover:bg-gray-50 transition-colors">
+                <tr v-for="order in orders" :key="order.id" class="hover:bg-gray-50 transition-colors">
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="text-sm font-semibold text-gray-900 border-b border-gray-900">#{{ order.id }}</span>
+                    <span class="text-sm font-semibold text-gray-900 border-b border-gray-900">#{{ order.order_number }}</span>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-medium text-gray-900">{{ order.customerName }}</div>
+                    <div class="text-sm font-medium text-gray-900">{{ getCustomerName(order) }}</div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ formatDate(order.date) }}
+                    {{ formatDate(order.created_at) }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
                     {{ formatCurrency(order.total) }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getPaymentBadgeClass(order.paymentStatus)">
-                      {{ order.paymentStatus }}
+                    <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getPaymentBadgeClass(mapPaymentStatus(order.payment_status))">
+                      {{ mapPaymentStatus(order.payment_status) }}
                     </span>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getOrderBadgeClass(order.orderStatus)">
-                      {{ order.orderStatus }}
+                    <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getOrderBadgeClass(mapStatus(order.status))">
+                      {{ mapStatus(order.status) }}
                     </span>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div class="flex items-center justify-end gap-3">
                       <!-- Dropdown to Update Status -->
-                      <select 
-                        v-model="order.orderStatus" 
+                      <select
+                        :value="mapStatus(order.status)"
+                        @change="updateOrderStatusHandler(order, $event.target.value)"
                         class="text-xs bg-white border border-gray-200 rounded-md py-1 pl-2 pr-6 text-gray-700 outline-none focus:ring-1 focus:ring-gray-300 focus:border-gray-300"
                         title="Update Status"
                       >
@@ -271,7 +312,7 @@ const updateOrderStatus = (order, newStatus) => {
                     </div>
                   </td>
                 </tr>
-                <tr v-if="paginatedOrders.length === 0">
+                <tr v-if="orders.length === 0">
                   <td colspan="7" class="px-6 py-8 text-center text-gray-500 bg-white">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
@@ -284,24 +325,24 @@ const updateOrderStatus = (order, newStatus) => {
           </div>
 
           <!-- Pagination -->
-          <div class="bg-white px-4 py-3 border-t border-gray-200 flex items-center justify-between sm:px-6">
+          <div v-if="!loading" class="bg-white px-4 py-3 border-t border-gray-200 flex items-center justify-between sm:px-6">
             <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
               <div>
                 <p class="text-sm text-gray-700">
                   Showing
-                  <span class="font-medium">{{ filteredOrders.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0 }}</span>
+                  <span class="font-medium">{{ pagination.total > 0 ? (pagination.current_page - 1) * pagination.per_page + 1 : 0 }}</span>
                   to
-                  <span class="font-medium">{{ Math.min(currentPage * itemsPerPage, filteredOrders.length) }}</span>
+                  <span class="font-medium">{{ Math.min(pagination.current_page * pagination.per_page, pagination.total) }}</span>
                   of
-                  <span class="font-medium">{{ filteredOrders.length }}</span>
+                  <span class="font-medium">{{ pagination.total }}</span>
                   orders
                 </p>
               </div>
               <div>
                 <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                  <button 
-                    @click="prevPage" 
-                    :disabled="currentPage === 1"
+                  <button
+                    @click="prevPage"
+                    :disabled="pagination.current_page === 1"
                     class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     <span class="sr-only">Previous</span>
@@ -310,11 +351,11 @@ const updateOrderStatus = (order, newStatus) => {
                     </svg>
                   </button>
                   <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
-                    Page {{ currentPage }} of {{ totalPages || 1 }}
+                    Page {{ pagination.current_page }} of {{ totalPages || 1 }}
                   </span>
-                  <button 
+                  <button
                     @click="nextPage"
-                    :disabled="currentPage === totalPages || totalPages === 0"
+                    :disabled="pagination.current_page === totalPages || totalPages === 0"
                     class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     <span class="sr-only">Next</span>
@@ -324,16 +365,6 @@ const updateOrderStatus = (order, newStatus) => {
                   </button>
                 </nav>
               </div>
-            </div>
-            <!-- Mobile Pagination -->
-            <div class="flex items-center justify-between sm:hidden w-full">
-              <button @click="prevPage" :disabled="currentPage === 1" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors">
-                Previous
-              </button>
-              <span class="text-sm text-gray-700">Page {{ currentPage }} of {{ totalPages || 1 }}</span>
-              <button @click="nextPage" :disabled="currentPage === totalPages || totalPages === 0" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors">
-                Next
-              </button>
             </div>
           </div>
 

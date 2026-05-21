@@ -21,7 +21,7 @@ const toggleWish = (id, e) => {
 const selectedProductId = ref(null)
 
 const openModal = (product) => {
-  selectedProductId.value = product.id
+  selectedProductId.value = String(product.id)
   document.body.style.overflow = 'hidden'
 }
 

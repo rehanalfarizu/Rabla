@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import Navbar from './layouts/Navbar.vue'
 import Footer from './layouts/Footer.vue'
+import './api'
 
 const route = useRoute()
 const showNavbar = computed(() =>

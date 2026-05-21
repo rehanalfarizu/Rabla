@@ -1,17 +1,24 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import logoImg from '../assets/Logo.webp'
+import ToastAlert from '../components/ToastAlert.vue'
+import api from '../api'
+import { firebaseAuth } from '../firebase'
 
 const router = useRouter()
+const toastRef = ref(null)
+
+const isLoading = ref(false)
+const agreeTerms = ref(false)
+const errorMsg = ref('')
+
+// Form fields
 const fullName = ref('')
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
-const agreeTerms = ref(false)
-const errorMsg = ref('')
-const isLoading = ref(false)
 
+// Manual register
 const handleRegister = async (e) => {
   e.preventDefault()
   errorMsg.value = ''
@@ -20,196 +27,168 @@ const handleRegister = async (e) => {
     errorMsg.value = 'Password dan konfirmasi password tidak cocok!'
     return
   }
+  if (password.value.length < 8) {
+    errorMsg.value = 'Password minimal 8 karakter!'
+    return
+  }
   if (!agreeTerms.value) {
-    errorMsg.value = 'Harap setujui syarat dan ketentuan terlebih dahulu.'
+    errorMsg.value = 'Harap setujui syarat dan ketentuan.'
     return
   }
 
   isLoading.value = true
   try {
-    // TODO: Ganti dengan API call ke backend saat sudah tersedia
-    // Contoh: const res = await fetch('/api/auth/register', { method: 'POST', body: JSON.stringify({...}) })
-    console.log({ fullName: fullName.value, email: email.value, agreeTerms: agreeTerms.value })
-
-    // Simpan token & info user ke localStorage (langsung login setelah register)
-    const fakeToken = btoa(`${email.value}:${Date.now()}`)
-    localStorage.setItem('auth_token', fakeToken)
-    localStorage.setItem('auth_user', JSON.stringify({
-      email: email.value,
+    const response = await api.post('/api/auth/register', {
       name: fullName.value,
-      profileCompleted: false,
-    }))
+      email: email.value,
+      password: password.value,
+      password_confirmation: confirmPassword.value,
+    })
 
-    // Simpan kredensial di key terpisah untuk validasi login
-    // Catatan: di produksi, password tidak boleh disimpan plain-text — gunakan backend + hashing
-    const credentials = JSON.parse(localStorage.getItem('auth_credentials') || '[]')
-    const existing = credentials.findIndex(c => c.email === email.value)
-    const entry = { email: email.value, password: password.value }
-    if (existing >= 0) credentials[existing] = entry
-    else credentials.push(entry)
-    localStorage.setItem('auth_credentials', JSON.stringify(credentials))
+    const { user, token } = response.data
 
-    // Redirect ke halaman OTP untuk verifikasi
-    router.push('/otp-verification')
+    localStorage.setItem('auth_token', token)
+    localStorage.setItem('user', JSON.stringify(user))
+
+    toastRef.value.show('success', 'Registrasi berhasil!')
+    setTimeout(() => router.push('/'), 1500)
   } catch (err) {
-    errorMsg.value = 'Registrasi gagal. Silakan coba lagi.'
-    console.error(err)
+    const message = err.response?.data?.message || err.response?.data?.errors?.email?.[0] || 'Registrasi gagal.'
+    errorMsg.value = message
+    toastRef.value.show('error', message)
   } finally {
     isLoading.value = false
   }
 }
 
-const goToLogin = () => {
-  router.push('/login')
+// Google Register
+const handleGoogleRegister = async () => {
+  errorMsg.value = ''
+
+  if (!fullName.value || !fullName.value.trim()) {
+    toastRef.value.show('warning', 'Nama lengkap wajib diisi.')
+    return
+  }
+  if (!email.value || !email.value.includes('@')) {
+    toastRef.value.show('warning', 'Masukkan email yang valid.')
+    return
+  }
+  if (!agreeTerms.value) {
+    toastRef.value.show('warning', 'Harap setujui syarat dan ketentuan.')
+    return
+  }
+
+  isLoading.value = true
+
+  try {
+    const actionCodeSettings = {
+      url: `${window.location.origin}/register-verify?email=${encodeURIComponent(email.value)}&name=${encodeURIComponent(fullName.value)}`,
+      handleCodeInApp: true,
+    }
+
+    await firebaseAuth.sendSignInLinkToEmail(firebaseAuth.auth, email.value, actionCodeSettings)
+    localStorage.setItem('emailForSignIn', email.value)
+    localStorage.setItem('newUserName', fullName.value)
+
+    toastRef.value.show('success', `Link verifikasi dikirim ke ${email.value}`)
+  } catch (error) {
+    console.error('Google register error:', error)
+    toastRef.value.show('error', 'Registrasi dengan Google gagal.')
+  } finally {
+    isLoading.value = false
+  }
 }
+
+const goToLogin = () => router.push('/login')
 </script>
 
 <template>
+  <ToastAlert ref="toastRef" />
+
   <main class="bg-gray-50 px-4 md:px-8 relative min-h-screen">
-    <!-- Breadcrumb Navbar -->
-    <div class="absolute top-0 left-0 w-full pt-6 px-4">
-      <nav aria-label="Breadcrumb">
-         <ul class="flex items-center justify-center gap-3">
-            <li>
-               <div class="flex items-center">
-                  <RouterLink to="/"
-                     class="text-slate-500 font-medium text-sm leading-snug flex items-center gap-2 hover:text-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded">
-                     <svg xmlns="http://www.w3.org/2000/svg" class="size-4 fill-current overflow-visible"
-                        viewBox="0 0 512 512" aria-hidden="true">
-                        <path
-                           d="M426 495.983H86c-25.364 0-46-20.635-46-46v-242.02c0-8.836 7.163-16 16-16s16 7.164 16 16v242.02c0 7.72 6.28 14 14 14h340c7.72 0 14-6.28 14-14v-242.02c0-8.836 7.163-16 16-16s16 7.164 16 16v242.02c0 25.364-20.635 46-46 46"
-                           data-original="#000000" />
-                        <path
-                           d="M496 263.958a15.95 15.95 0 0 1-11.313-4.687L285.698 60.284c-16.375-16.376-43.02-16.376-59.396 0L27.314 259.272c-6.248 6.249-16.379 6.249-22.627 0-6.249-6.248-6.249-16.379 0-22.627L203.675 37.656c28.852-28.852 75.799-28.852 104.65 0l198.988 198.988c6.249 6.249 6.249 16.379 0 22.627A15.94 15.94 0 0 1 496 263.958M320 495.983H192c-8.837 0-16-7.164-16-16v-142c0-27.57 22.43-50 50-50h60c27.57 0 50 22.43 50 50v142c0 8.836-7.163 16-16 16m-112-32h96v-126c0-9.925-8.075-18-18-18h-60c-9.925 0-18 8.075-18 18z"
-                           data-original="#000000" />
-                     </svg>
-                     Home
-                  </RouterLink>
-               </div>
-            </li>
-            <li aria-current="page">
-               <div class="flex items-center gap-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="fill-slate-500 size-2.5 overflow-visible"
-                     viewBox="0 0 451.846 451.847" aria-hidden="true">
-                     <path
-                        d="M345.441 248.292 151.154 442.573c-12.359 12.365-32.397 12.365-44.75 0-12.354-12.354-12.354-32.391 0-44.744L278.318 225.92 106.409 54.017c-12.354-12.359-12.354-32.394 0-44.748 12.354-12.359 32.391-12.359 44.75 0l194.287 194.284c6.177 6.18 9.262 14.271 9.262 22.366 0 8.099-3.091 16.196-9.267 22.373"
-                        data-original="#000000" />
-                  </svg>
-                  <span class="text-slate-900 text-sm leading-snug font-medium">
-                     Register
-                  </span>
-               </div>
-            </li>
-         </ul>
-      </nav>
+    <!-- Loading overlay -->
+    <div v-if="isLoading" class="fixed inset-0 bg-white/80 z-50 flex items-center justify-center">
+      <div class="text-center">
+        <svg class="animate-spin h-10 w-10 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="mt-4 text-gray-600">Memproses...</p>
+      </div>
     </div>
 
-    <div class="min-h-screen flex flex-col items-center justify-center pt-24 pb-12">
+    <div class="min-h-screen flex flex-col items-center justify-center pt-20">
       <div class="max-w-md w-full">
         <div class="p-6 rounded-lg bg-white border border-slate-300 shadow-xs md:p-8">
           <h1 class="text-slate-900 text-center text-3xl font-bold">Register</h1>
 
-          <form class="space-y-6 mt-10" @submit="handleRegister">
+          <form @submit="handleRegister" class="mt-8 space-y-4">
             <div>
-              <label for="fullName" class="mb-2 text-slate-900 font-medium text-sm inline-block">Full Name</label>
-              <input
-                v-model="fullName"
-                type="text"
-                id="fullName"
-                name="fullName"
-                placeholder="John Doe"
-                required
-                class="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600"
-              />
+              <label class="mb-2 text-slate-900 font-medium text-sm inline-block">Nama Lengkap</label>
+              <input v-model="fullName" type="text" placeholder="John Doe"
+                class="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600" />
             </div>
             <div>
-              <label for="email" class="mb-2 text-slate-900 font-medium text-sm inline-block">Email</label>
-              <input
-                v-model="email"
-                type="email"
-                id="email"
-                name="email"
-                placeholder="john@readymadeui.com"
-                required
-                class="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600"
-              />
+              <label class="mb-2 text-slate-900 font-medium text-sm inline-block">Email</label>
+              <input v-model="email" type="email" placeholder="john@example.com"
+                class="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600" />
             </div>
             <div>
-              <label for="password" class="mb-2 text-slate-900 font-medium text-sm inline-block">Password</label>
-              <input
-                v-model="password"
-                type="password"
-                id="password"
-                name="password"
-                placeholder="••••••••"
-                required
-                class="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600"
-              />
+              <label class="mb-2 text-slate-900 font-medium text-sm inline-block">Password</label>
+              <input v-model="password" type="password" placeholder="Minimal 8 karakter"
+                class="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600" />
             </div>
             <div>
-              <label for="confirmPassword" class="mb-2 text-slate-900 font-medium text-sm inline-block">Confirm Password</label>
-              <input
-                v-model="confirmPassword"
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                placeholder="••••••••"
-                required
-                class="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600"
-              />
+              <label class="mb-2 text-slate-900 font-medium text-sm inline-block">Konfirmasi Password</label>
+              <input v-model="confirmPassword" type="password" placeholder="Ulangi password"
+                class="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600" />
             </div>
 
-            <div class="flex items-start flex-wrap gap-2">
-              <label class="flex items-center group has-[input:checked]:text-slate-900">
-                <input v-model="agreeTerms" id="agree" name="agree" type="checkbox" class="sr-only" required />
-                <!-- Custom box -->
-                <span
-                  class="flex h-4 w-4 shrink-0 items-center justify-center rounded outline-1 outline-slate-300 bg-white group-has-[input:checked]:bg-blue-600 group-has-[input:checked]:outline-blue-600 group-focus-within:outline-2 group-focus-within:outline-blue-600"
-                  aria-hidden="true"
-                >
-                  <!-- Checkmark -->
-                  <svg
-                    class="size-3 text-white opacity-0 group-has-[input:checked]:opacity-100"
-                    viewBox="0 0 12 10"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path d="M1 5l3 3 7-7" />
-                  </svg>
-                </span>
-                <span class="ml-3 text-sm text-slate-700">
-                  I agree to the
-                  <a href="#" class="text-blue-700 hover:underline font-medium">Terms and Conditions</a>
-                </span>
+            <div class="flex items-center gap-2">
+              <input v-model="agreeTerms" id="agree" type="checkbox" class="w-4 h-4" />
+              <label for="agree" class="text-sm text-slate-700">
+                I agree to the <a href="#" class="text-blue-700 hover:underline">Terms and Conditions</a>
               </label>
             </div>
 
-            <!-- Error Message -->
-            <p v-if="errorMsg" class="text-red-600 text-sm text-center -mt-2">{{ errorMsg }}</p>
+            <p v-if="errorMsg" class="text-red-600 text-sm">{{ errorMsg }}</p>
 
-            <button
-              type="submit"
-              :disabled="isLoading"
-              class="w-full py-2 px-3.5 text-sm rounded-md font-semibold tracking-wide text-white border border-blue-600 bg-blue-600 hover:bg-blue-700 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              <span v-if="isLoading">Mendaftar...</span>
-              <span v-else>Register</span>
+            <button type="submit"
+              class="w-full py-2.5 px-4 text-sm rounded-md font-semibold text-white border border-blue-600 bg-blue-600 hover:bg-blue-700 transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+              Register
             </button>
-
-            <div class="text-slate-900 text-sm text-center">
-              Already have an account?
-              <button
-                type="button"
-                @click="goToLogin"
-                class="text-blue-700 hover:underline ml-1 font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
-              >
-                Log in
-              </button>
-            </div>
           </form>
+
+          <!-- Divider -->
+          <div class="relative my-6">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full border-t border-slate-300"></div>
+            </div>
+            <div class="relative flex justify-center text-sm">
+              <span class="bg-white px-2 text-slate-500">Atau</span>
+            </div>
+          </div>
+
+          <!-- Google Button -->
+          <button @click="handleGoogleRegister"
+            class="w-full py-2.5 px-4 text-sm rounded-md font-semibold text-slate-700 border border-slate-300 bg-white hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Daftar dengan Google
+          </button>
+
+          <div class="text-slate-900 text-sm text-center mt-6">
+            Sudah punya akun?
+            <button @click="goToLogin" class="text-blue-700 hover:underline ml-1 font-medium">
+              Log in
+            </button>
           </div>
         </div>
       </div>
+    </div>
   </main>
 </template>
