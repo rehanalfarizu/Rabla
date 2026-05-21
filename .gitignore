@@ -11,3 +11,10 @@ backend/.env.*.local
 frontend/.env
 frontend/.env.local
 frontend/.env.*.local
+
+# Firebase credentials
+backend/firebase/service-account.json
+
+# IDE
+.DS_Store
+*.swp
