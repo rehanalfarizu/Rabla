@@ -47,6 +47,10 @@ class AuthenticateApiToken
         if (!$user) {
             return response()->json([
                 'message' => 'Unauthenticated. Invalid token.',
+                'debug' => [
+                    'token_length' => strlen($token),
+                    'hashed_token' => $hashedToken,
+                ],
             ], 401);
         }
 
