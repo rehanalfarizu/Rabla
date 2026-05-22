@@ -14,8 +14,9 @@ class AuthenticateApiToken
         $token = $request->bearerToken();
 
         // Debug logging
-        \Log::info('Auth middleware - Token present: ' . ($token ? 'yes (' . substr($token, 0, 10) . '...)' : 'no'));
-        \Log::info('Auth middleware - Headers: ' . json_encode($request->headers->all()));
+        error_log("=== AUTH MIDDLEWARE ===");
+        error_log("Token present: " . ($token ? "YES (first 20 chars: " . substr($token, 0, 20) . ")" : "NO"));
+        error_log("All headers: " . json_encode($request->headers->all()));
 
         if (!$token) {
             return response()->json([
