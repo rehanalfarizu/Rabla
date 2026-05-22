@@ -16,15 +16,12 @@ class AuthenticateApiToken
         if (!$token) {
             return response()->json([
                 'message' => 'Unauthenticated. Token required.',
-                'debug_headers' => $request->headers->all(),
             ], 401);
         }
 
         // Check if it's a Firebase token (starts with 'firebase_')
         if (str_starts_with($token, 'firebase_')) {
-            // For Firebase users, just set the user from email or allow access
-            // This is a simplified auth for Firebase-only users
-            $firebaseUid = substr($token, 9); // Remove 'firebase_' prefix
+            $firebaseUid = substr($token, 9);
             $user = User::where('firebase_uid', $firebaseUid)->first();
 
             if (!$user) {
@@ -47,14 +44,9 @@ class AuthenticateApiToken
         if (!$user) {
             return response()->json([
                 'message' => 'Unauthenticated. Invalid token.',
-                'debug' => [
-                    'token_length' => strlen($token),
-                    'hashed_token' => $hashedToken,
-                ],
             ], 401);
         }
 
-        // Set the authenticated user
         $request->setUserResolver(function () use ($user) {
             return $user;
         });

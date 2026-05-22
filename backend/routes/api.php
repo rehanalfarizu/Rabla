@@ -27,11 +27,8 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth.api');
     Route::get('/user', [AuthController::class, 'user'])->middleware('auth.api');
-    // Test endpoint with custom header
-    Route::get('/user-alt', [AuthController::class, 'userAlt']);
     Route::post('/send-otp', [OtpController::class, 'sendOtp'])->middleware('throttle:3,1');
     Route::post('/verify-login-otp', [OtpController::class, 'verifyOtp'])->middleware('throttle:5,1');
-    // Profile
     Route::get('/profile', [ProfileController::class, 'show'])->middleware('auth.api');
     Route::put('/profile', [ProfileController::class, 'update'])->middleware('auth.api');
 });

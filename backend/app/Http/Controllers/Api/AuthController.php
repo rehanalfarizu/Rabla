@@ -155,23 +155,12 @@ class AuthController extends Controller
             ]);
         }
 
-        // Generate new token
         $token = Str::random(64);
-        $hashedToken = hash('sha256', $token);
-
-        error_log("=== LOGIN DEBUG ===");
-        error_log("Email: " . $user->email);
-        error_log("Generated token: " . $token);
-        error_log("Hashed token: " . $hashedToken);
 
         $user->update([
             'last_login_at' => now(),
-            'api_token' => $hashedToken,
+            'api_token' => hash('sha256', $token),
         ]);
-
-        // Verify the update worked
-        $user->refresh();
-        error_log("After update - api_token in DB: " . ($user->api_token ?? 'NULL'));
 
         return response()->json([
             'user' => $this->sanitizeUser($user),
@@ -194,32 +183,6 @@ class AuthController extends Controller
     public function user(Request $request)
     {
         return response()->json($this->sanitizeUser($request->user()));
-    }
-
-    // Test endpoint without middleware - directly accept Authorization header
-    public function userAlt(Request $request)
-    {
-        $token = $request->bearerToken();
-
-        if (!$token) {
-            return response()->json([
-                'message' => 'No token found in Authorization header',
-                'headers' => $request->headers->all(),
-            ], 401);
-        }
-
-        $hashedToken = hash('sha256', $token);
-        $user = User::where('api_token', $hashedToken)->first();
-
-        if (!$user) {
-            return response()->json([
-                'message' => 'User not found',
-                'token_length' => strlen($token),
-                'hashed_token' => $hashedToken,
-            ], 401);
-        }
-
-        return response()->json($this->sanitizeUser($user));
     }
 
     public function firebaseLogin(Request $request)
