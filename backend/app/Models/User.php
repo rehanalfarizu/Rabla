@@ -15,7 +15,7 @@ class User extends Model implements AuthenticatableContract
     protected $connection = "mongodb";
     protected $collection = "users";
 
-    protected $fillable = ["name","email","password","phone","avatar","firebase_uid"];
+    protected $fillable = ["name","email","password","phone","avatar","firebase_uid","api_token","is_verified","is_admin","verification_token","verification_expires","last_login_at"];
     protected $hidden = ["password","verification_token"];
     protected $casts = ["is_admin"=>"boolean","is_verified"=>"boolean","verification_expires"=>"datetime","last_login_at"=>"datetime","email_verified_at"=>"datetime"];
 
