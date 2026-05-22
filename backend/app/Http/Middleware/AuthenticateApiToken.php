@@ -13,6 +13,10 @@ class AuthenticateApiToken
     {
         $token = $request->bearerToken();
 
+        // Debug logging
+        \Log::info('Auth middleware - Token present: ' . ($token ? 'yes (' . substr($token, 0, 10) . '...)' : 'no'));
+        \Log::info('Auth middleware - Headers: ' . json_encode($request->headers->all()));
+
         if (!$token) {
             return response()->json([
                 'message' => 'Unauthenticated. Token required.',
