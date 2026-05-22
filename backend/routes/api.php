@@ -25,14 +25,10 @@ Route::get('/categories/{id}', [CategoryController::class, 'show']);
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
-    Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:5,1');
-    Route::post('/resend-otp', [AuthController::class, 'resendOtp'])->middleware('throttle:3,1');
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth.api');
     Route::get('/user', [AuthController::class, 'user'])->middleware('auth.api');
-    // Firebase Auth routes
-    Route::post('/firebase-login', [AuthController::class, 'firebaseLogin']);
-    Route::post('/firebase-register', [AuthController::class, 'firebaseRegister']);
-    // Backend OTP (fallback when Firebase quota exceeded)
+    // Test endpoint with custom header
+    Route::get('/user-alt', [AuthController::class, 'userAlt']);
     Route::post('/send-otp', [OtpController::class, 'sendOtp'])->middleware('throttle:3,1');
     Route::post('/verify-login-otp', [OtpController::class, 'verifyOtp'])->middleware('throttle:5,1');
     // Profile

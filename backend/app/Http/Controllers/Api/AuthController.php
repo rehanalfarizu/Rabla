@@ -196,6 +196,32 @@ class AuthController extends Controller
         return response()->json($this->sanitizeUser($request->user()));
     }
 
+    // Test endpoint without middleware - directly accept Authorization header
+    public function userAlt(Request $request)
+    {
+        $token = $request->bearerToken();
+
+        if (!$token) {
+            return response()->json([
+                'message' => 'No token found in Authorization header',
+                'headers' => $request->headers->all(),
+            ], 401);
+        }
+
+        $hashedToken = hash('sha256', $token);
+        $user = User::where('api_token', $hashedToken)->first();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found',
+                'token_length' => strlen($token),
+                'hashed_token' => $hashedToken,
+            ], 401);
+        }
+
+        return response()->json($this->sanitizeUser($user));
+    }
+
     public function firebaseLogin(Request $request)
     {
         $validated = $request->validate([
