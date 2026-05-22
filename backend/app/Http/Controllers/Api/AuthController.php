@@ -157,10 +157,18 @@ class AuthController extends Controller
 
         // Generate new token
         $token = Str::random(64);
+        $hashedToken = hash('sha256', $token);
+
+        \Log::info("Login - Email: {$user->email}, Token: {$token}, Hash: {$hashedToken}");
+
         $user->update([
             'last_login_at' => now(),
-            'api_token' => hash('sha256', $token),
+            'api_token' => $hashedToken,
         ]);
+
+        // Verify the update worked
+        $user->refresh();
+        \Log::info("After update - api_token in DB: " . ($user->api_token ?? 'null'));
 
         return response()->json([
             'user' => $this->sanitizeUser($user),
