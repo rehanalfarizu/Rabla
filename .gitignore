@@ -6,11 +6,13 @@ CLAUDE.md
 backend/.env
 backend/.env.local
 backend/.env.*.local
+backend/.env.heroku
 
 # Frontend
 frontend/.env
 frontend/.env.local
 frontend/.env.*.local
+frontend/.env.production
 
 # Firebase credentials
 backend/firebase/service-account.json
