@@ -137,6 +137,7 @@ class AuthController extends Controller
             'phone' => $user->phone,
             'avatar' => $user->avatar,
             'is_verified' => $user->is_verified,
+            'is_admin' => $user->is_admin,
         ];
     }
 
