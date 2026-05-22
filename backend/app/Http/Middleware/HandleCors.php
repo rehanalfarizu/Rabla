@@ -32,6 +32,16 @@ class HandleCors
             return $response;
         }
 
+        // Handle preflight OPTIONS request - return early with CORS headers
+        if ($request->isMethod('OPTIONS')) {
+            return response('', 200)
+                ->header('Access-Control-Allow-Origin', $origin ?: $allowedOrigins[0])
+                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
+                ->header('Access-Control-Allow-Credentials', 'true')
+                ->header('Access-Control-Max-Age', '86400');
+        }
+
         return $next($request);
     }
 }
