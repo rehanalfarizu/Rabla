@@ -13,14 +13,10 @@ class AuthenticateApiToken
     {
         $token = $request->bearerToken();
 
-        // Debug logging
-        error_log("=== AUTH MIDDLEWARE ===");
-        error_log("Token present: " . ($token ? "YES (first 20 chars: " . substr($token, 0, 20) . ")" : "NO"));
-        error_log("All headers: " . json_encode($request->headers->all()));
-
         if (!$token) {
             return response()->json([
                 'message' => 'Unauthenticated. Token required.',
+                'debug_headers' => $request->headers->all(),
             ], 401);
         }
 
