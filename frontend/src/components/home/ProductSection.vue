@@ -112,7 +112,7 @@ const formatPrice = (n) => 'Rp ' + n.toLocaleString('id-ID')
               <span v-if="product.discount" class="ml-auto text-xs font-semibold text-rose-500">-{{ product.discount }}%</span>
             </div>
 
-            <!-- Quick view button - Recommended Minimal -->
+           <!-- Quick view button - Recommended Minimal -->
 <button
   @click.stop="openModal(product)"
   class="mt-4 w-full py-3 rounded-xl bg-white text-slate-700 text-sm font-semibold border border-slate-200 shadow-sm hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 hover:shadow-md active:scale-95 transition-all duration-300 flex items-center justify-center gap-2"
