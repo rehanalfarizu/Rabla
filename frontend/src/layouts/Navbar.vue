@@ -205,21 +205,22 @@ const goToProfile = () => {
             </div>
           </form>
 
+          <!-- Auth Buttons Desktop -->
           <template v-if="!isLoggedIn">
-            <RouterLink
-              to="/login"
-              class="rounded-full px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
-            >
-              Login
-            </RouterLink>
+  <RouterLink
+    to="/login"
+    class="px-3 py-2 text-sm font-semibold text-slate-500 transition-all duration-300 hover:text-slate-950"
+  >
+    Login
+  </RouterLink>
 
-            <RouterLink
-              to="/register"
-              class="rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-            >
-              Sign up
-            </RouterLink>
-          </template>
+  <RouterLink
+    to="/register"
+    class="px-3 py-2 text-sm font-semibold text-slate-500 transition-all duration-300 hover:text-slate-950"
+  >
+    Sign up
+  </RouterLink>
+</template>
 
           <template v-else>
             <RouterLink
@@ -397,25 +398,26 @@ const goToProfile = () => {
             Products
           </RouterLink>
 
+          <!-- Auth Buttons Mobile -->
           <template v-if="!isLoggedIn">
-            <div class="mt-2 grid grid-cols-2 gap-2">
-              <RouterLink
-                to="/login"
-                class="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold text-slate-700"
-                @click="mobileMenuOpen = false"
-              >
-                Login
-              </RouterLink>
+  <div class="mt-3 grid grid-cols-2 gap-2">
+    <RouterLink
+      to="/login"
+      class="rounded-xl px-3 py-3 text-center text-sm font-semibold text-slate-600 transition-all duration-300 hover:bg-slate-100 hover:text-slate-950"
+      @click="mobileMenuOpen = false"
+    >
+      Login
+    </RouterLink>
 
-              <RouterLink
-                to="/register"
-                class="rounded-xl bg-slate-950 px-3 py-3 text-center text-sm font-semibold text-white"
-                @click="mobileMenuOpen = false"
-              >
-                Sign up
-              </RouterLink>
-            </div>
-          </template>
+    <RouterLink
+      to="/register"
+      class="rounded-xl px-3 py-3 text-center text-sm font-semibold text-slate-600 transition-all duration-300 hover:bg-slate-100 hover:text-slate-950"
+      @click="mobileMenuOpen = false"
+    >
+      Sign up
+    </RouterLink>
+  </div>
+</template>
 
           <template v-else>
             <div class="mt-2 rounded-xl bg-slate-50 px-3 py-3">
