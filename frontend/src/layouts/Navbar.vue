@@ -20,6 +20,7 @@ const isProductsActive = computed(() => route.path.startsWith('/products'))
 const showBanner = ref(true)
 const showNavbar = ref(true)
 const lastScrollY = ref(0)
+const isScrolled = ref(false)
 
 const isLoggedIn = ref(false)
 const authUser = ref({})
@@ -41,12 +42,30 @@ const userName = computed(() => authUser.value?.name || authUser.value?.email ||
 
 const handleScroll = () => {
   const currentScroll = window.scrollY
+  const scrollDelta = currentScroll - lastScrollY.value
 
-  if (currentScroll > lastScrollY.value && currentScroll > 80) {
-    showNavbar.value = false
-  } else {
+  isScrolled.value = currentScroll > 20
+
+  // Kalau mobile menu sedang terbuka, navbar jangan hilang
+  if (mobileMenuOpen.value) {
     showNavbar.value = true
+    lastScrollY.value = currentScroll
+    return
   }
+
+  // Saat masih di atas halaman, navbar tetap tampil
+  if (currentScroll <= 80) {
+    showNavbar.value = true
+    lastScrollY.value = currentScroll
+    return
+  }
+
+  // Biar navbar tidak kedip-kedip saat scroll kecil
+  if (Math.abs(scrollDelta) < 10) return
+
+  // Scroll ke bawah = hilang
+  // Scroll ke atas = muncul
+  showNavbar.value = scrollDelta < 0
 
   lastScrollY.value = currentScroll
 }
@@ -114,8 +133,11 @@ const goToProfile = () => {
 
 <template>
   <div
-    class="fixed left-0 top-0 z-50 w-full bg-white transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
-    :class="showNavbar ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'"
+    class="fixed left-0 top-0 z-50 w-full transform-gpu will-change-transform transition-[transform,opacity,background-color,box-shadow] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+    :class="[
+      showNavbar ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none',
+      isScrolled ? 'bg-white/90 backdrop-blur-xl shadow-sm' : 'bg-white'
+    ]"
   >
     <!-- Banner -->
     <div
@@ -139,7 +161,10 @@ const goToProfile = () => {
     </div>
 
     <!-- Navbar -->
-    <header class="border-b border-slate-200 bg-white">
+    <header
+  class="border-b transition-all duration-500"
+  :class="isScrolled ? 'border-slate-200 bg-white/90 backdrop-blur-xl' : 'border-slate-100 bg-white'"
+>
       <div class="mx-auto flex h-[76px] max-w-7xl items-center justify-between gap-4 px-4 md:px-6 lg:px-8">
         <!-- Logo -->
         <RouterLink
